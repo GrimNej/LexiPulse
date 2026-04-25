@@ -36,7 +36,7 @@ Rules:
 Return a JSON array of exactly {count} objects. Each object must follow this exact structure:
 
 [
-  {
+  {{
     "word": "string",
     "pronunciation": "IPA string (e.g. /vɛˈliːɪti/)",
     "part_of_speech": "string (noun, verb, adjective, adverb, etc.)",
@@ -50,7 +50,7 @@ Return a JSON array of exactly {count} objects. Each object must follow this exa
       "string — example sentence in a professional or journalistic context",
       "string — example sentence in an everyday, grounded context"
     ]
-  }
+  }}
 ]
 """
 
