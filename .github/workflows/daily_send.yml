@@ -1,0 +1,22 @@
+name: Daily Newsletter Send
+
+on:
+  schedule:
+    - cron: '15 1 * * *'   # 01:15 UTC = 07:00 AM NPT (UTC+05:45)
+  workflow_dispatch:         # Allows manual trigger from the GitHub Actions UI
+
+jobs:
+  trigger-daily-send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Trigger daily send endpoint
+        run: |
+          curl -X POST "${{ secrets.APP_BASE_URL }}/scheduler/run" \
+            -H "X-Scheduler-Key: ${{ secrets.SCHEDULER_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            --max-time 120 \
+            --retry 3 \
+            --retry-delay 10 \
+            --fail

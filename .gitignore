@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Environment
+.env
+.env.local
+.env.*
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+cron.log
+cleanup.log
+
+# Alembic (keep migrations, ignore local db)
+*.db
+*.sqlite
+
+# Private documentation
+Plan.md
+DEPLOYMENT.md
+
+# Secrets / Keys
+*.key
+*.pem

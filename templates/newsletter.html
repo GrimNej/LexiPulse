@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LexiPulse</title>
+  <style>
+    @media (prefers-color-scheme: dark) {
+      .dark-bg { background-color: #1a1814 !important; }
+      .dark-card { background-color: #25221e !important; }
+      .dark-text { color: #e8e4de !important; }
+      .dark-muted { color: #a8a29e !important; }
+      .dark-rule { border-top-color: #3d3935 !important; }
+      .dark-accent { color: #a59ad6 !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#faf8f5;" class="dark-bg">
+  <!-- Preheader -->
+  <div style="display:none;font-size:1px;color:#faf8f5;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+    Three new words for your morning — including '{{ words[0].word }}' and two more.
+  </div>
+
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#faf8f5;" class="dark-bg">
+    <tr>
+      <td align="center" style="padding: 32px 16px;">
+        <table role="presentation" width="100%" maxwidth="600" style="max-width:600px;width:100%;" cellspacing="0" cellpadding="0" border="0">
+          
+          <!-- Header -->
+          <tr>
+            <td style="padding-bottom:24px;border-bottom:1px solid #e5e1da;" class="dark-rule">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:#3d2c8d;" class="dark-accent">
+                    LexiPulse
+                  </td>
+                  <td align="right" style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;color:#8a8478;" class="dark-muted">
+                    {{ send_date }}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Greeting -->
+          <tr>
+            <td style="padding:32px 0 24px 0;">
+              <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:18px;line-height:1.6;color:#1a1814;" class="dark-text">
+                Good morning, {{ user_name }}.
+              </p>
+              <p style="margin:8px 0 0 0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;line-height:1.6;color:#5c564c;" class="dark-muted">
+                Three words for today, at your level.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Words -->
+          {% for word in words %}
+          <tr>
+            <td style="padding:24px 0;{% if not loop.last %}border-bottom:1px solid #e5e1da;{% endif %}" class="dark-rule">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td>
+                    <h2 style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:400;color:#1a1814;text-transform:uppercase;letter-spacing:0.04em;" class="dark-text">
+                      {{ word.word }}
+                    </h2>
+                    <p style="margin:4px 0 0 0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;color:#8a8478;" class="dark-muted">
+                      {{ word.pronunciation }} &nbsp;&middot;&nbsp; {{ word.part_of_speech }}
+                    </p>
+                    <p style="margin:12px 0 0 0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;font-style:italic;color:#6b655b;line-height:1.5;" class="dark-muted">
+                      {{ word.etymology }}
+                    </p>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td style="padding-top:20px;">
+                    <p style="margin:0 0 10px 0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#3d2c8d;" class="dark-accent">
+                      What it means
+                    </p>
+                    {% for definition in word.definitions %}
+                    <p style="margin:0 0 10px 0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;line-height:1.7;color:#1a1814;" class="dark-text">
+                      {{ definition }}
+                    </p>
+                    {% endfor %}
+                  </td>
+                </tr>
+
+                <tr>
+                  <td style="padding-top:20px;">
+                    <p style="margin:0 0 10px 0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#3d2c8d;" class="dark-accent">
+                      In use
+                    </p>
+                    {% for example in word.examples %}
+                    <p style="margin:0 0 14px 0;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.7;color:#1a1814;" class="dark-text">
+                      {{ example }}
+                    </p>
+                    {% endfor %}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endfor %}
+
+          <!-- Feedback Section -->
+          <tr>
+            <td style="padding:32px 0 24px 0;border-top:1px solid #e5e1da;" class="dark-rule">
+              <p style="margin:0 0 20px 0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;text-align:center;color:#1a1814;" class="dark-text">
+                How were today's words?
+              </p>
+
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;">
+                      <tr>
+                        <td style="padding:0 6px;">
+                          <a href="{{ base_url }}/feedback?t={{ token }}&a=too_easy" style="display:inline-block;padding:10px 20px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;font-weight:500;color:#ffffff;background-color:#3d2c8d;border-radius:9999px;text-decoration:none;">
+                            Too Easy
+                          </a>
+                        </td>
+                        <td style="padding:0 6px;">
+                          <a href="{{ base_url }}/feedback?t={{ token }}&a=just_right" style="display:inline-block;padding:10px 20px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;font-weight:500;color:#ffffff;background-color:#3d2c8d;border-radius:9999px;text-decoration:none;">
+                            Just Right
+                          </a>
+                        </td>
+                        <td style="padding:0 6px;">
+                          <a href="{{ base_url }}/feedback?t={{ token }}&a=too_hard" style="display:inline-block;padding:10px 20px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;font-weight:500;color:#ffffff;background-color:#3d2c8d;border-radius:9999px;text-decoration:none;">
+                            Too Hard
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" style="padding-top:16px;">
+                    <a href="{{ base_url }}/feedback?t={{ token }}&a=want_more" style="display:inline-block;padding:8px 18px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:12px;font-weight:500;color:#3d2c8d;background-color:transparent;border:1px solid #3d2c8d;border-radius:9999px;text-decoration:none;">
+                      Send Me More
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding-top:24px;border-top:1px solid #e5e1da;" class="dark-rule">
+              <p style="margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:12px;text-align:center;color:#8a8478;line-height:1.6;" class="dark-muted">
+                LexiPulse &middot; Sent to you daily &middot; Level {{ level }}
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
