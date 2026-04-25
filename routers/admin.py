@@ -199,6 +199,7 @@ async def send_now(
     try:
         newsletter = await create_and_send_newsletter(db, user, source="admin_manual", force=True)
         if newsletter:
+            await db.commit()
             logger.info(f"Admin manual send completed for user {user.id}")
             return {"status": "sent", "newsletter_id": str(newsletter.id)}
         else:

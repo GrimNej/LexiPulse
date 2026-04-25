@@ -81,4 +81,8 @@ async def handle_feedback(
             logger.exception(f"Failed on-demand send for user {user.id}: {exc}")
 
     await db.commit()
-    return Response(status_code=204)
+    return Response(
+        content="<html><script>window.close()</script><body style='margin:0;display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui,sans-serif;color:#666;'>Thanks. You can close this tab.</body></html>",
+        media_type="text/html",
+        status_code=200,
+    )
