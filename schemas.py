@@ -10,10 +10,11 @@ from pydantic import BaseModel, EmailStr, Field, ConfigDict
 class UserBase(BaseModel):
     name: str = Field(..., max_length=100)
     email: EmailStr
-    level: int = Field(default=5, ge=1, le=10)
+    level: Optional[int] = Field(default=5, ge=1, le=10)
     is_active: bool = True
     timezone: str = "Asia/Kathmandu"
     topic: str = "vocabulary"
+    newsletter_prompt: Optional[str] = None
 
 
 class UserCreate(UserBase):
@@ -27,6 +28,7 @@ class UserUpdate(BaseModel):
     is_active: Optional[bool] = None
     timezone: Optional[str] = None
     topic: Optional[str] = None
+    newsletter_prompt: Optional[str] = None
 
 
 class UserRead(UserBase):
@@ -41,9 +43,16 @@ class UserStats(UserRead):
     total_words: int
     current_level: int
     topic: str
+    newsletter_prompt: Optional[str] = None
 
 
 # ── Newsletter Schemas ────────────────────────────────────────
+
+class NewsletterSection(BaseModel):
+    heading: str
+    content: str
+    style: str = "paragraph"  # paragraph | bullet | quote
+
 
 class WordData(BaseModel):
     word: str
@@ -80,6 +89,7 @@ class SubscribeRequest(BaseModel):
     email: EmailStr
     topic: str = Field(default="vocabulary", max_length=100)
     timezone: str = "Asia/Kathmandu"
+    newsletter_prompt: Optional[str] = None
 
 
 class SubscribeResponse(BaseModel):

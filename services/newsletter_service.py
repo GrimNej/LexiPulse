@@ -6,10 +6,13 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import settings
-from models import User, Newsletter, SentWord
-from services.word_generator import generate_unique_words, WordGenerationError
-from services.email_service import render_newsletter_email, send_email
+from models import User, Newsletter
+from services.email_service import render_dynamic_newsletter_email, send_email
 from services.token_service import create_feedback_token, generate_unsubscribe_token
+from services.content_agent import generate_newsletter_content
+
+
+DEFAULT_PROMPT = "Three advanced English vocabulary words with pronunciation, etymology, definitions, and example sentences. The words should be genuinely rare and rewarding to learn."
 
 
 async def count_newsletters_today(db: AsyncSession, user_id: UUID) -> int:
@@ -42,13 +45,13 @@ async def create_and_send_newsletter(
     force: bool = False,
 ) -> Optional[Newsletter]:
     """
-    Generate words, create newsletter record, send email, store sent_words.
-    
+    Generate content via AI agent, create newsletter record, send email.
+
     Args:
         db: Database session
         user: Target user
         source: 'scheduled', 'on_demand', or 'admin_manual'
-        force: If True, bypass the daily duplicate check (used for admin manual send)
+        force: If True, bypass the daily duplicate check
     """
     # Idempotency: if scheduled newsletter already exists for today, skip
     if source == "scheduled" and not force:
@@ -66,20 +69,38 @@ async def create_and_send_newsletter(
         # admin_manual: does not count toward cap
         sequence_num = await count_newsletters_today(db, user.id) + 1
 
-    # Generate words
+    # Get user's prompt or use default
+    user_prompt = user.newsletter_prompt or DEFAULT_PROMPT
+
+    # Generate content via AI agent
+    today = date.today()
+    date_str = today.strftime("%B %d, %Y")
     try:
-        words_data = await generate_unique_words(db, user.id, user.level, count=3)
-    except WordGenerationError:
-        raise
+        content = await generate_newsletter_content(user_prompt, date_str)
+    except Exception as exc:
+        # Fallback: create a simple apology newsletter
+        content = {
+            "title": "Your Daily Brief",
+            "subtitle": date_str,
+            "sections": [
+                {
+                    "heading": "We'll Be Right Back",
+                    "content": "We encountered an issue generating your custom newsletter today. Our AI agent is being retrained as we speak. Your next edition will arrive on schedule.",
+                    "style": "paragraph",
+                }
+            ],
+            "closing": "Thank you for your patience.",
+        }
 
     # Create newsletter record
-    today = date.today()
     newsletter = Newsletter(
         user_id=user.id,
         send_date=today,
         sequence_num=sequence_num,
-        level_at_send=user.level,
-        words=words_data,
+        level_at_send=user.level or 5,
+        words=None,
+        prompt_used=user_prompt,
+        content_structure=content,
         source=source,
         sent_at=datetime.now(timezone.utc),
     )
@@ -94,27 +115,16 @@ async def create_and_send_newsletter(
         user.unsubscribe_token = generate_unsubscribe_token()
         await db.flush()
 
-    # Write sent_words
-    for word_data in words_data:
-        sent_word = SentWord(
-            user_id=user.id,
-            word=word_data["word"],
-            newsletter_id=newsletter.id,
-            level_at_send=user.level,
-            sent_at=datetime.now(timezone.utc),
-        )
-        db.add(sent_word)
-
-    await db.flush()
-
     # Render and send email
     send_date_str = today.strftime("%B %d")
-    subject = f"Three words for {send_date_str}"
-    html_body = render_newsletter_email(
+    subject = content.get("title", "Your Daily Brief")
+    html_body = render_dynamic_newsletter_email(
         user_name=user.name,
         user_id=user.id,
-        level=user.level,
-        words=words_data,
+        title=content.get("title", "Your Daily Brief"),
+        subtitle=content.get("subtitle", send_date_str),
+        sections=content.get("sections", []),
+        closing=content.get("closing", "Until tomorrow."),
         token=token,
         send_date=send_date_str,
         unsubscribe_token=user.unsubscribe_token,

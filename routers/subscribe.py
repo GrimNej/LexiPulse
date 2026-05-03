@@ -33,6 +33,8 @@ async def subscribe(data: SubscribeRequest, db: AsyncSession = Depends(get_db)):
             user.name = data.name
             user.topic = data.topic
             user.timezone = data.timezone
+            if data.newsletter_prompt:
+                user.newsletter_prompt = data.newsletter_prompt
             await db.commit()
             logger.info(f"User reactivated via subscribe: {user.email}")
             return SubscribeResponse(
@@ -49,6 +51,7 @@ async def subscribe(data: SubscribeRequest, db: AsyncSession = Depends(get_db)):
         is_active=True,
         timezone=data.timezone,
         topic=data.topic,
+        newsletter_prompt=data.newsletter_prompt,
         unsubscribe_token=generate_unsubscribe_token(),
     )
     db.add(new_user)

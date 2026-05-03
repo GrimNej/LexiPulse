@@ -42,6 +42,7 @@ async def create_user(
         is_active=data.is_active,
         timezone=data.timezone,
         topic=data.topic,
+        newsletter_prompt=data.newsletter_prompt,
         unsubscribe_token=generate_unsubscribe_token(),
     )
     db.add(user)
@@ -95,6 +96,7 @@ async def list_users(
                 is_active=user.is_active,
                 timezone=user.timezone,
                 topic=user.topic,
+                newsletter_prompt=user.newsletter_prompt,
                 created_at=user.created_at,
                 total_newsletters=nl_counts.get(user.id, 0),
                 total_words=word_counts.get(user.id, 0),
@@ -166,6 +168,8 @@ async def update_user(
         user.timezone = data.timezone
     if data.topic is not None:
         user.topic = data.topic
+    if data.newsletter_prompt is not None:
+        user.newsletter_prompt = data.newsletter_prompt
 
     await db.commit()
     return user

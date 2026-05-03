@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 import httpx
@@ -28,11 +28,39 @@ def render_newsletter_email(
     send_date: str,
     unsubscribe_token: str,
 ) -> str:
+    """Legacy renderer for vocabulary-style newsletters."""
     html = template.render(
         user_name=user_name,
         user_id=user_id,
         level=level,
         words=words,
+        token=token,
+        send_date=send_date,
+        base_url=settings.app_base_url.rstrip("/"),
+        unsubscribe_token=unsubscribe_token,
+    )
+    return html
+
+
+def render_dynamic_newsletter_email(
+    user_name: str,
+    user_id: UUID,
+    title: str,
+    subtitle: str,
+    sections: List[dict],
+    closing: str,
+    token: str,
+    send_date: str,
+    unsubscribe_token: str,
+) -> str:
+    """Render a dynamic newsletter from agent-generated content."""
+    html = template.render(
+        user_name=user_name,
+        user_id=user_id,
+        title=title,
+        subtitle=subtitle,
+        sections=sections,
+        closing=closing,
         token=token,
         send_date=send_date,
         base_url=settings.app_base_url.rstrip("/"),
