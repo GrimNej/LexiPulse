@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import settings
 from models import User, Newsletter
-from services.email_service import render_dynamic_newsletter_email, send_email
+from services.email_service import render_newsletter_email, send_email
 from services.token_service import create_feedback_token, generate_unsubscribe_token
 from services.content_agent import generate_newsletter_content
 
@@ -45,48 +45,43 @@ async def create_and_send_newsletter(
     force: bool = False,
 ) -> Optional[Newsletter]:
     """
-    Generate content via AI agent, create newsletter record, send email.
-
-    Args:
-        db: Database session
-        user: Target user
-        source: 'scheduled', 'on_demand', or 'admin_manual'
-        force: If True, bypass the daily duplicate check
+    Generate content via AI creative director, design layout, render email, send.
     """
-    # Idempotency: if scheduled newsletter already exists for today, skip
+    # Idempotency
     if source == "scheduled" and not force:
         already_sent = await has_scheduled_newsletter_today(db, user.id)
         if already_sent:
             return None
 
-    # Daily cap check (skip for admin_manual)
+    # Daily cap check
     if source in ("scheduled", "on_demand"):
         today_count = await count_newsletters_today(db, user.id)
         if today_count >= 5:
             return None
         sequence_num = today_count + 1
     else:
-        # admin_manual: does not count toward cap
         sequence_num = await count_newsletters_today(db, user.id) + 1
 
-    # Get user's prompt or use default
+    # Get user's prompt
     user_prompt = user.newsletter_prompt or DEFAULT_PROMPT
 
-    # Generate content via AI agent
+    # Generate content + design via creative director agent
     today = date.today()
     date_str = today.strftime("%B %d, %Y")
     try:
         content = await generate_newsletter_content(user_prompt, date_str)
     except Exception as exc:
-        # Fallback: create a simple apology newsletter
+        # Fallback apology newsletter
         content = {
             "title": "Your Daily Brief",
             "subtitle": date_str,
+            "mood": "minimal",
             "sections": [
                 {
-                    "heading": "We'll Be Right Back",
-                    "content": "We encountered an issue generating your custom newsletter today. Our AI agent is being retrained as we speak. Your next edition will arrive on schedule.",
-                    "style": "paragraph",
+                    "heading": "",
+                    "content": "We encountered an issue generating your custom newsletter today. Our creative director is being retrained. Your next edition will arrive on schedule.",
+                    "component": "content_card",
+                    "style": "bordered",
                 }
             ],
             "closing": "Thank you for your patience.",
@@ -101,16 +96,17 @@ async def create_and_send_newsletter(
         words=None,
         prompt_used=user_prompt,
         content_structure=content,
+        design_metadata={"mood": content.get("mood", "minimal")},
         source=source,
         sent_at=datetime.now(timezone.utc),
     )
     db.add(newsletter)
-    await db.flush()  # Get newsletter.id
+    await db.flush()
 
     # Create feedback token
     token = await create_feedback_token(db, user.id, newsletter.id)
 
-    # Ensure user has an unsubscribe token
+    # Ensure unsubscribe token
     if not user.unsubscribe_token:
         user.unsubscribe_token = generate_unsubscribe_token()
         await db.flush()
@@ -118,11 +114,12 @@ async def create_and_send_newsletter(
     # Render and send email
     send_date_str = today.strftime("%B %d")
     subject = content.get("title", "Your Daily Brief")
-    html_body = render_dynamic_newsletter_email(
+    html_body = render_newsletter_email(
         user_name=user.name,
         user_id=user.id,
         title=content.get("title", "Your Daily Brief"),
         subtitle=content.get("subtitle", send_date_str),
+        mood=content.get("mood", "minimal"),
         sections=content.get("sections", []),
         closing=content.get("closing", "Until tomorrow."),
         token=token,

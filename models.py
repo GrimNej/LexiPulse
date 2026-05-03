@@ -56,6 +56,7 @@ class Newsletter(Base):
     words = Column(JSONB, nullable=True)
     prompt_used = Column(Text, nullable=True)
     content_structure = Column(JSONB, nullable=True)
+    design_metadata = Column(JSONB, nullable=True)
     source = Column(String(20), nullable=False, default="scheduled")
     sent_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
 

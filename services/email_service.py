@@ -1,20 +1,18 @@
-from datetime import datetime
-from typing import List, Optional
+"""
+Email rendering and sending for mofa-letter.
+
+The renderer builds the complete HTML email in Python using the component library
+for maximum visual control and email-client compatibility.
+"""
+from typing import List, Dict, Any
 from uuid import UUID
 
 import httpx
-from jinja2 import Environment, FileSystemLoader, select_autoescape
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from config import settings
-
-# Jinja2 setup
-env = Environment(
-    loader=FileSystemLoader("templates"),
-    autoescape=select_autoescape(["html", "xml"]),
-)
-
-template = env.get_template("newsletter.html")
+from services.components import render_component
+from services.themes import get_theme, build_inline_styles
 
 RESEND_URL = "https://api.resend.com/emails"
 
@@ -22,51 +20,151 @@ RESEND_URL = "https://api.resend.com/emails"
 def render_newsletter_email(
     user_name: str,
     user_id: UUID,
-    level: int,
-    words: List[dict],
-    token: str,
-    send_date: str,
-    unsubscribe_token: str,
-) -> str:
-    """Legacy renderer for vocabulary-style newsletters."""
-    html = template.render(
-        user_name=user_name,
-        user_id=user_id,
-        level=level,
-        words=words,
-        token=token,
-        send_date=send_date,
-        base_url=settings.app_base_url.rstrip("/"),
-        unsubscribe_token=unsubscribe_token,
-    )
-    return html
-
-
-def render_dynamic_newsletter_email(
-    user_name: str,
-    user_id: UUID,
     title: str,
     subtitle: str,
-    sections: List[dict],
+    mood: str,
+    sections: List[Dict[str, Any]],
     closing: str,
     token: str,
     send_date: str,
     unsubscribe_token: str,
 ) -> str:
-    """Render a dynamic newsletter from agent-generated content."""
-    html = template.render(
-        user_name=user_name,
-        user_id=user_id,
-        title=title,
-        subtitle=subtitle,
-        sections=sections,
-        closing=closing,
-        token=token,
-        send_date=send_date,
-        base_url=settings.app_base_url.rstrip("/"),
-        unsubscribe_token=unsubscribe_token,
-    )
+    """
+    Build a complete, beautiful HTML email using the Adaptive Component Matrix.
+    """
+    # Load theme and build inline styles
+    theme = get_theme(mood)
+    light_styles = build_inline_styles(theme, is_dark=False)
+    dark_styles = build_inline_styles(theme, is_dark=True)
+
+    # Render all content sections
+    body_sections_html = ""
+    for section in sections:
+        body_sections_html += render_component(
+            component_type=section.get("component", "content_card"),
+            style=section.get("style", "bordered"),
+            heading=section.get("heading", ""),
+            content=section.get("content", ""),
+            styles=light_styles,
+        )
+
+    # Build closing section
+    closing_html = ""
+    if closing and closing.strip():
+        closing_html = f'''<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td style="padding:{light_styles['section_pad']} 0;">
+      <p style="font-family:Georgia,'Times New Roman',serif;font-size:16px;font-style:italic;line-height:1.7;color:{light_styles['body_text']};margin:0;">{closing}</p>
+    </td>
+  </tr>
+</table>'''
+
+    # Build send-more CTA
+    cta_html = f'''<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td style="padding:24px 0;border-top:1px solid {light_styles['border_color']};">
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;">
+        <tr>
+          <td align="center">
+            <a href="{settings.app_base_url.rstrip('/')}/feedback?t={token}&a=want_more" style="display:inline-block;padding:10px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;font-weight:500;color:{light_styles['accent_color']};background-color:transparent;border:1px solid {light_styles['accent_color']};border-radius:9999px;text-decoration:none;">
+              Send Me More
+            </a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>'''
+
+    # Build footer
+    footer_html = f'''<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td style="padding-top:24px;border-top:1px solid {light_styles['border_color']};">
+      <p style="margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:12px;text-align:center;color:{light_styles['muted']};line-height:1.6;">
+        mofa-letter &middot; Sent to you daily
+      </p>
+      <p style="margin:8px 0 0 0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:11px;text-align:center;color:{light_styles['muted']};">
+        <a href="{settings.app_base_url.rstrip('/')}/unsubscribe?token={unsubscribe_token}" style="color:{light_styles['muted']};text-decoration:underline;">Unsubscribe</a>
+      </p>
+    </td>
+  </tr>
+</table>'''
+
+    # Build dark mode styles
+    dark_mode_css = _build_dark_mode_css(dark_styles)
+
+    # Assemble full HTML
+    html = f'''<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{title}</title>
+  <style>
+    {dark_mode_css}
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:{light_styles['body_bg']};" class="mofa-dark-bg">
+  <!-- Preheader -->
+  <div style="display:none;font-size:1px;color:{light_styles['body_bg']};line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+    {title} — {subtitle}
+  </div>
+
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:{light_styles['body_bg']};" class="mofa-dark-bg">
+    <tr>
+      <td align="center" style="padding: 32px 16px;">
+        <table role="presentation" width="100%" maxwidth="600" style="max-width:600px;width:100%;" cellspacing="0" cellpadding="0" border="0">
+
+          <!-- Header -->
+          <tr>
+            <td style="padding-bottom:20px;border-bottom:1px solid {light_styles['border_color']};">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:{light_styles['accent_color']};">
+                    mofa-letter
+                  </td>
+                  <td align="right" style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:12px;color:{light_styles['muted']};">
+                    {send_date}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body Sections -->
+          {body_sections_html}
+
+          <!-- Closing -->
+          {closing_html}
+
+          <!-- CTA -->
+          {cta_html}
+
+          <!-- Footer -->
+          {footer_html}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>'''
+
     return html
+
+
+def _build_dark_mode_css(dark_styles: Dict[str, str]) -> str:
+    """Build dark mode media query CSS."""
+    return f"""
+    @media (prefers-color-scheme: dark) {{
+      .mofa-dark-bg {{ background-color: {dark_styles['body_bg']} !important; }}
+      .mofa-dark-text {{ color: {dark_styles['body_text']} !important; }}
+      .mofa-dark-muted {{ color: {dark_styles['muted']} !important; }}
+      .mofa-dark-accent {{ color: {dark_styles['accent_color']} !important; }}
+      .mofa-dark-border {{ border-color: {dark_styles['border_color']} !important; }}
+      .mofa-dark-card {{ background-color: {dark_styles['card_bg']} !important; border-color: {dark_styles['card_border']} !important; }}
+    }}
+"""
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10), reraise=True)
