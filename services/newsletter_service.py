@@ -9,7 +9,7 @@ from config import settings
 from models import User, Newsletter, SentWord
 from services.word_generator import generate_unique_words, WordGenerationError
 from services.email_service import render_newsletter_email, send_email
-from services.token_service import create_feedback_token
+from services.token_service import create_feedback_token, generate_unsubscribe_token
 
 
 async def count_newsletters_today(db: AsyncSession, user_id: UUID) -> int:
@@ -89,6 +89,11 @@ async def create_and_send_newsletter(
     # Create feedback token
     token = await create_feedback_token(db, user.id, newsletter.id)
 
+    # Ensure user has an unsubscribe token
+    if not user.unsubscribe_token:
+        user.unsubscribe_token = generate_unsubscribe_token()
+        await db.flush()
+
     # Write sent_words
     for word_data in words_data:
         sent_word = SentWord(
@@ -112,6 +117,7 @@ async def create_and_send_newsletter(
         words=words_data,
         token=token,
         send_date=send_date_str,
+        unsubscribe_token=user.unsubscribe_token,
     )
     await send_email(user.email, subject, html_body)
 

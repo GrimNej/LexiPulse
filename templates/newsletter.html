@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LexiPulse</title>
+  <title>mofa-letter</title>
   <style>
     @media (prefers-color-scheme: dark) {
-      .dark-bg { background-color: #1a1814 !important; }
-      .dark-card { background-color: #25221e !important; }
-      .dark-text { color: #e8e4de !important; }
-      .dark-muted { color: #a8a29e !important; }
-      .dark-rule { border-top-color: #3d3935 !important; }
-      .dark-accent { color: #a59ad6 !important; }
+      .dark-bg { background-color: #111827 !important; }
+      .dark-card { background-color: #1f2937 !important; }
+      .dark-text { color: #f9fafb !important; }
+      .dark-muted { color: #9ca3af !important; }
+      .dark-rule { border-top-color: #374151 !important; }
+      .dark-accent { color: #0f766e !important; }
     }
   </style>
 </head>
@@ -31,8 +31,8 @@
             <td style="padding-bottom:24px;border-bottom:1px solid #e5e1da;" class="dark-rule">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
-                  <td style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:#3d2c8d;" class="dark-accent">
-                    LexiPulse
+                  <td style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:#0f766e;" class="dark-accent">
+                    mofa-letter
                   </td>
                   <td align="right" style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;color:#8a8478;" class="dark-muted">
                     {{ send_date }}
@@ -75,7 +75,7 @@
 
                 <tr>
                   <td style="padding-top:20px;">
-                    <p style="margin:0 0 10px 0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#3d2c8d;" class="dark-accent">
+                    <p style="margin:0 0 10px 0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#0f766e;" class="dark-accent">
                       What it means
                     </p>
                     {% for definition in word.definitions %}
@@ -88,7 +88,7 @@
 
                 <tr>
                   <td style="padding-top:20px;">
-                    <p style="margin:0 0 10px 0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#3d2c8d;" class="dark-accent">
+                    <p style="margin:0 0 10px 0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#0f766e;" class="dark-accent">
                       In use
                     </p>
                     {% for example in word.examples %}
@@ -116,17 +116,17 @@
                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;">
                       <tr>
                         <td style="padding:0 6px;">
-                          <a href="{{ base_url }}/feedback?t={{ token }}&a=too_easy" style="display:inline-block;padding:10px 20px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;font-weight:500;color:#ffffff;background-color:#3d2c8d;border-radius:9999px;text-decoration:none;">
+                          <a href="{{ base_url }}/feedback?t={{ token }}&a=too_easy" style="display:inline-block;padding:10px 20px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;font-weight:500;color:#ffffff;background-color:#0f766e;border-radius:9999px;text-decoration:none;">
                             Too Easy
                           </a>
                         </td>
                         <td style="padding:0 6px;">
-                          <a href="{{ base_url }}/feedback?t={{ token }}&a=just_right" style="display:inline-block;padding:10px 20px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;font-weight:500;color:#ffffff;background-color:#3d2c8d;border-radius:9999px;text-decoration:none;">
+                          <a href="{{ base_url }}/feedback?t={{ token }}&a=just_right" style="display:inline-block;padding:10px 20px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;font-weight:500;color:#ffffff;background-color:#0f766e;border-radius:9999px;text-decoration:none;">
                             Just Right
                           </a>
                         </td>
                         <td style="padding:0 6px;">
-                          <a href="{{ base_url }}/feedback?t={{ token }}&a=too_hard" style="display:inline-block;padding:10px 20px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;font-weight:500;color:#ffffff;background-color:#3d2c8d;border-radius:9999px;text-decoration:none;">
+                          <a href="{{ base_url }}/feedback?t={{ token }}&a=too_hard" style="display:inline-block;padding:10px 20px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;font-weight:500;color:#ffffff;background-color:#0f766e;border-radius:9999px;text-decoration:none;">
                             Too Hard
                           </a>
                         </td>
@@ -136,7 +136,7 @@
                 </tr>
                 <tr>
                   <td align="center" style="padding-top:16px;">
-                    <a href="{{ base_url }}/feedback?t={{ token }}&a=want_more" style="display:inline-block;padding:8px 18px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:12px;font-weight:500;color:#3d2c8d;background-color:transparent;border:1px solid #3d2c8d;border-radius:9999px;text-decoration:none;">
+                    <a href="{{ base_url }}/feedback?t={{ token }}&a=want_more" style="display:inline-block;padding:8px 18px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:12px;font-weight:500;color:#0f766e;background-color:transparent;border:1px solid #0f766e;border-radius:9999px;text-decoration:none;">
                       Send Me More
                     </a>
                   </td>
@@ -149,7 +149,10 @@
           <tr>
             <td style="padding-top:24px;border-top:1px solid #e5e1da;" class="dark-rule">
               <p style="margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:12px;text-align:center;color:#8a8478;line-height:1.6;" class="dark-muted">
-                LexiPulse &middot; Sent to you daily &middot; Level {{ level }}
+                mofa-letter &middot; Sent to you daily &middot; Level {{ level }}
+              </p>
+              <p style="margin:8px 0 0 0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:11px;text-align:center;color:#9ca3af;" class="dark-muted">
+                <a href="{{ base_url }}/unsubscribe?token={{ unsubscribe_token }}" style="color:#9ca3af;text-decoration:underline;">Unsubscribe</a>
               </p>
             </td>
           </tr>

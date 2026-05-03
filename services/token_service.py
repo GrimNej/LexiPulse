@@ -17,6 +17,10 @@ def generate_feedback_token() -> str:
     return secrets.token_hex(32)
 
 
+def generate_unsubscribe_token() -> str:
+    return secrets.token_hex(32)
+
+
 async def create_feedback_token(
     db: AsyncSession,
     user_id: UUID,

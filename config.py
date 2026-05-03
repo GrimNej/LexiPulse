@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     # Email
     resend_api_key: str
     from_email: str
-    from_name: str = "LexiPulse"
+    from_name: str = "mofa-letter"
 
     # Application
     app_base_url: str

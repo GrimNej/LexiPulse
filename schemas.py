@@ -13,6 +13,7 @@ class UserBase(BaseModel):
     level: int = Field(default=5, ge=1, le=10)
     is_active: bool = True
     timezone: str = "Asia/Kathmandu"
+    topic: str = "vocabulary"
 
 
 class UserCreate(UserBase):
@@ -25,6 +26,7 @@ class UserUpdate(BaseModel):
     level: Optional[int] = Field(default=None, ge=1, le=10)
     is_active: Optional[bool] = None
     timezone: Optional[str] = None
+    topic: Optional[str] = None
 
 
 class UserRead(UserBase):
@@ -38,6 +40,7 @@ class UserStats(UserRead):
     total_newsletters: int
     total_words: int
     current_level: int
+    topic: str
 
 
 # ── Newsletter Schemas ────────────────────────────────────────
@@ -71,6 +74,24 @@ class FeedbackAction(BaseModel):
 
 
 # ── Admin Schemas ─────────────────────────────────────────────
+
+class SubscribeRequest(BaseModel):
+    name: str = Field(..., max_length=100)
+    email: EmailStr
+    topic: str = Field(default="vocabulary", max_length=100)
+    timezone: str = "Asia/Kathmandu"
+
+
+class SubscribeResponse(BaseModel):
+    status: str
+    message: str
+    user_id: Optional[UUID] = None
+
+
+class UnsubscribeResponse(BaseModel):
+    status: str
+    message: str
+
 
 class AdminUserCreateResponse(UserRead):
     pass

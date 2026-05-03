@@ -26,6 +26,7 @@ def render_newsletter_email(
     words: List[dict],
     token: str,
     send_date: str,
+    unsubscribe_token: str,
 ) -> str:
     html = template.render(
         user_name=user_name,
@@ -35,6 +36,7 @@ def render_newsletter_email(
         token=token,
         send_date=send_date,
         base_url=settings.app_base_url.rstrip("/"),
+        unsubscribe_token=unsubscribe_token,
     )
     return html
 

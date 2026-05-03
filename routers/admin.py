@@ -11,6 +11,7 @@ from database import get_db
 from models import User, Newsletter, SentWord
 from schemas import UserCreate, UserUpdate, UserRead, UserStats
 from services.newsletter_service import create_and_send_newsletter
+from services.token_service import generate_unsubscribe_token
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 logger = logging.getLogger(__name__)
@@ -40,6 +41,8 @@ async def create_user(
         level=data.level,
         is_active=data.is_active,
         timezone=data.timezone,
+        topic=data.topic,
+        unsubscribe_token=generate_unsubscribe_token(),
     )
     db.add(user)
     await db.flush()
@@ -91,6 +94,7 @@ async def list_users(
                 level=user.level,
                 is_active=user.is_active,
                 timezone=user.timezone,
+                topic=user.topic,
                 created_at=user.created_at,
                 total_newsletters=nl_counts.get(user.id, 0),
                 total_words=word_counts.get(user.id, 0),
@@ -126,6 +130,7 @@ async def get_user(
         level=user.level,
         is_active=user.is_active,
         timezone=user.timezone,
+        topic=user.topic,
         created_at=user.created_at,
         total_newsletters=nl_result.scalar_one(),
         total_words=word_result.scalar_one(),
@@ -159,6 +164,8 @@ async def update_user(
         user.is_active = data.is_active
     if data.timezone is not None:
         user.timezone = data.timezone
+    if data.topic is not None:
+        user.topic = data.topic
 
     await db.commit()
     return user

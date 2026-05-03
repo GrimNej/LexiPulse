@@ -31,6 +31,8 @@ class User(Base):
     level = Column(Integer, nullable=False, default=5)
     is_active = Column(Boolean, nullable=False, default=True)
     timezone = Column(String(50), nullable=False, default="Asia/Kathmandu")
+    topic = Column(String(100), nullable=False, default="vocabulary")
+    unsubscribe_token = Column(String(64), unique=True, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
     newsletters = relationship("Newsletter", back_populates="user", cascade="all, delete-orphan")
