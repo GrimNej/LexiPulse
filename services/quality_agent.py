@@ -26,6 +26,8 @@ Your job is to REVIEW a newsletter draft and decide if it's good enough to send.
 2. **Content Quality**
    - Content is specific and concrete (names real companies, people, products)
    - No obvious hallucination signals (vague phrases like "some experts say" without naming them, dates that seem made up, products that sound fictional)
+   - NO generic filler text: "Stay informed", "Follow us for more", "Stay ahead of the curve" — these are meaningless and must be rejected
+   - NO literal escape sequences like `\n` or `\t` visible in the text
    - Short, scannable paragraphs
    - Under 3 minutes read time
 
@@ -143,6 +145,24 @@ def quick_validate(content: Dict[str, Any]) -> List[str]:
     for phrase in hallucination_phrases:
         if phrase in full_text:
             issues.append(f"Vague attribution detected: '{phrase.strip()}'")
+
+    # Check for literal escape sequences
+    raw_text = " ".join(
+        f"{sec.get('heading', '')} {sec.get('content', '')}" for sec in sections
+    )
+    if "\\n" in raw_text:
+        issues.append("Literal \\n escape sequences found in content — must use actual newlines")
+    if "\\t" in raw_text:
+        issues.append("Literal \\t escape sequences found in content")
+
+    # Check for generic filler
+    filler_phrases = [
+        "stay informed", "follow us for more", "stay ahead of the curve",
+        "stay tuned", "keep updated", "for more insights",
+    ]
+    for phrase in filler_phrases:
+        if phrase in full_text:
+            issues.append(f"Generic filler text detected: '{phrase}'")
 
     # Check for source URLs on news content
     sources = content.get("sources", [])

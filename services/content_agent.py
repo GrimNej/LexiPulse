@@ -60,6 +60,8 @@ SYSTEM_PROMPT = """You are mofa-letter, an elite newsletter creative director an
 - Short paragraphs (2-4 sentences). One idea per paragraph.
 - Use bullet lists for scannable points.
 - Make it feel fresh every day. No recycled intros.
+- NEVER output the literal characters \\n in your text. Use actual line breaks.
+- NEVER write generic filler like \"Stay informed\" or \"Follow us for more.\" Every sentence must deliver actual information.
 - Content length: under 3 minutes to read.
 
 ## Source Citations (IMPORTANT)
@@ -83,7 +85,7 @@ You MUST respond with valid JSON only. No markdown, no preamble.
   "sections": [
     {
       "heading": "Section heading or empty string",
-      "content": "The content text. Use \\\\n for newlines. For bullet_list, put each item on its own line starting with • or just plain text. For highlight_stat, put the number/fact on the first line and context below.",
+      "content": "The content text. Use actual newlines (press Enter) for line breaks. For bullet_list, put each item on its own line. For highlight_stat, put the number/fact on the first line and context below.",
       "component": "content_card",
       "style": "left_accent",
       "source_url": "https://example.com/article"
@@ -195,8 +197,8 @@ def _normalize_content(parsed: dict) -> dict:
         if not isinstance(sec, dict):
             continue
         section = {
-            "heading": str(sec.get("heading", "")).strip(),
-            "content": str(sec.get("content", "")).strip(),
+            "heading": str(sec.get("heading", "")).strip().replace("\\n", "\n"),
+            "content": str(sec.get("content", "")).strip().replace("\\n", "\n"),
             "component": str(sec.get("component", "content_card")).strip().lower(),
             "style": str(sec.get("style", "bordered")).strip().lower(),
             "source_url": str(sec.get("source_url", "")).strip(),
