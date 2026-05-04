@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -286,6 +287,8 @@ async def generate_newsletter_with_qa(
     is_news = any(kw in user_prompt.lower() for kw in {"news", "update", "latest", "today", "breaking"})
     
     for attempt in range(1, max_attempts + 1):
+        if attempt > 1:
+            await asyncio.sleep(2)  # Rate limit protection between attempts
         content = await generate_newsletter_content(
             user_prompt=user_prompt,
             date_str=date_str,

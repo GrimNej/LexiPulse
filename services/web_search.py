@@ -123,16 +123,24 @@ def build_search_query(user_prompt: str, date_str: str) -> str:
         query = query.replace(word, "")
     
     # Clean up and extract core topic words (max ~8 words)
-    words = [w for w in query.split() if len(w) > 2 and w not in {
+    # Preserve short acronyms like AI, ML, VR, AR, NFT, DAO
+    stop_words = {
         "about", "with", "from", "that", "have", "this", "will",
         "your", "you", "for", "are", "the", "and", "but", "not",
-    }]
+        "was", "had", "has", "been", "being", "can", "could",
+    }
+    words = []
+    for w in query.split():
+        if w in stop_words:
+            continue
+        if len(w) > 2 or w in {"ai", "ml", "vr", "ar", "nft", "dao", "gpu", "api", "llm"}:
+            words.append(w)
     query = " ".join(words[:8]).strip(".!? ")
     
     # Add recency qualifier if not present
     if "today" not in query and "latest" not in query:
         query = f"latest {query}"
     
-    # Add month/year from date_str instead of full date
-    month_year = " ".join(date_str.split()[:2])  # "May 04" -> "May"
-    return f"{query} {month_year}"
+    # Add month from date_str
+    month = date_str.split()[0] if date_str else ""
+    return f"{query} {month}"
