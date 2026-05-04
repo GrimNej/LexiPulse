@@ -6,7 +6,7 @@ Uses DuckDuckGo (free, no API key). Swappable for Tavily/Perplexity.
 import asyncio
 from typing import List, Dict, Any, Optional
 
-from duckduckgo_search import DDGS
+from ddgs import DDGS
 
 
 async def search_web(query: str, max_results: int = 5) -> List[Dict[str, str]]:
