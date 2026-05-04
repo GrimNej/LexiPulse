@@ -28,6 +28,7 @@ def render_newsletter_email(
     token: str,
     send_date: str,
     unsubscribe_token: str,
+    sources: List[Dict[str, str]] = None,
 ) -> str:
     """
     Build a complete, beautiful HTML email using the Adaptive Component Matrix.
@@ -46,9 +47,29 @@ def render_newsletter_email(
             heading=section.get("heading", ""),
             content=section.get("content", ""),
             styles=light_styles,
+            source_url=section.get("source_url", ""),
         )
 
-    # Build closing section
+    # Build sources section
+    sources = sources or []
+    sources_html = ""
+    if sources:
+        source_items = ""
+        for src in sources:
+            source_title = src.get("title", "Source")
+            source_url = src.get("url", "")
+            if source_url:
+                source_items += f'<tr><td style="padding:0 0 8px 0;font-family:system-ui,-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;font-size:14px;color:{light_styles["body_text"]};"><a href="{source_url}" style="color:{light_styles["accent_color"]};text-decoration:none;">&bull; {source_title}</a></td></tr>'
+        sources_html = f'''<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td style="padding:24px 0;border-top:1px solid {light_styles['border_color']};">
+      <p style="font-family:{light_styles['header_font']};font-size:12px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:{light_styles['muted']};margin:0 0 12px 0;">Sources</p>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+        {source_items}
+      </table>
+    </td>
+  </tr>
+</table>'''
     closing_html = ""
     if closing and closing.strip():
         closing_html = f'''<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
@@ -136,6 +157,9 @@ def render_newsletter_email(
 
           <!-- Closing -->
           {closing_html}
+
+          <!-- Sources -->
+          {sources_html}
 
           <!-- CTA -->
           {cta_html}

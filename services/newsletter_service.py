@@ -9,7 +9,8 @@ from config import settings
 from models import User, Newsletter
 from services.email_service import render_newsletter_email, send_email
 from services.token_service import create_feedback_token, generate_unsubscribe_token
-from services.content_agent import generate_newsletter_content
+from services.content_agent import generate_newsletter_with_qa
+from services.web_search import search_web, format_search_context, is_time_sensitive_prompt, build_search_query
 
 
 DEFAULT_PROMPT = "Three advanced English vocabulary words with pronunciation, etymology, definitions, and example sentences. The words should be genuinely rare and rewarding to learn."
@@ -65,11 +66,21 @@ async def create_and_send_newsletter(
     # Get user's prompt
     user_prompt = user.newsletter_prompt or DEFAULT_PROMPT
 
-    # Generate content + design via creative director agent
+    # Stage 1: Web search (conditional)
     today = date.today()
     date_str = today.strftime("%B %d, %Y")
+    search_context = ""
+    if is_time_sensitive_prompt(user_prompt):
+        try:
+            search_query = build_search_query(user_prompt, date_str)
+            search_results = await search_web(search_query, max_results=5)
+            search_context = format_search_context(search_results)
+        except Exception:
+            search_context = ""
+
+    # Stage 2 & 3: Generate with QA review loop
     try:
-        content = await generate_newsletter_content(user_prompt, date_str)
+        content = await generate_newsletter_with_qa(user_prompt, date_str, search_context=search_context)
     except Exception as exc:
         # Fallback apology newsletter
         content = {
@@ -125,6 +136,7 @@ async def create_and_send_newsletter(
         token=token,
         send_date=send_date_str,
         unsubscribe_token=user.unsubscribe_token,
+        sources=content.get("sources", []),
     )
     await send_email(user.email, subject, html_body)
 

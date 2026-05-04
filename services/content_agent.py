@@ -7,6 +7,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 from config import settings
 from services.themes import THEMES
+from services.quality_agent import review_newsletter, quick_validate
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
@@ -35,7 +36,7 @@ SYSTEM_PROMPT = """You are mofa-letter, an elite newsletter creative director an
 - **bullet_list**: A list of items, points, or features. Styles: `dots` (• bullets), `numbered` (1. 2. 3.), `checkmarks` (✓ items), `arrows` (→ items).
 - **divider**: Visual separation. Styles: `line` (thin line), `spacing` (empty space), `decorative` (line with accent dot).
 - **insight_box**: A colored callout — tip, warning, or interesting fact. Styles: `tip` (blue-tinted), `warning` (amber-tinted), `fact` (green-tinted).
-- **two_column**: Side-by-side comparison or paired ideas. Styles: `equal` (50/50), `left_heavy` (60/40), `right_heavy` (40/60). Use `---` in content to separate left and right.
+- **highlight_stat**: A bold number, percentage, or key fact presented prominently. Styles: `big_number` (large bold number with context), `percentage` (large percentage with explanation), `milestone` (key achievement or milestone). Use for: "73% of AI startups...", "$2B funding round...", "1 million users..."
 
 ## Layout Rules
 
@@ -47,7 +48,7 @@ SYSTEM_PROMPT = """You are mofa-letter, an elite newsletter creative director an
   - A list of tips → `bullet_list` (checkmarks)
   - An important warning → `insight_box` (warning)
   - A deep explanation → `content_card` (left_accent)
-  - Two contrasting ideas → `two_column` (equal)
+  - A bold stat or number → `highlight_stat` (big_number)
   - A key takeaway → `insight_box` (fact)
 - End with a `divider` (spacing) before the closing if the body is long.
 
@@ -61,6 +62,15 @@ SYSTEM_PROMPT = """You are mofa-letter, an elite newsletter creative director an
 - Make it feel fresh every day. No recycled intros.
 - Content length: under 3 minutes to read.
 
+## Source Citations (IMPORTANT)
+
+If you are writing about news, current events, or recent developments, you MUST cite your sources.
+
+- Add `source_url` to sections that reference specific news
+- Add all sources to the top-level `sources` array
+- Only include real, verifiable URLs
+- If no sources are available, leave the arrays empty
+
 ## Output Format
 
 You MUST respond with valid JSON only. No markdown, no preamble.
@@ -73,10 +83,14 @@ You MUST respond with valid JSON only. No markdown, no preamble.
   "sections": [
     {
       "heading": "Section heading or empty string",
-      "content": "The content text. Use \\n for newlines. For bullet_list, put each item on its own line starting with • or just plain text. For two_column, separate sides with ---",
+      "content": "The content text. Use \\\\n for newlines. For bullet_list, put each item on its own line starting with • or just plain text. For highlight_stat, put the number/fact on the first line and context below.",
       "component": "content_card",
-      "style": "left_accent"
+      "style": "left_accent",
+      "source_url": "https://example.com/article"
     }
+  ],
+  "sources": [
+    {"title": "Source Name", "url": "https://example.com/article"}
   ],
   "closing": "Warm closing line."
 }
@@ -88,15 +102,16 @@ USER_PROMPT_TEMPLATE = """Create today's newsletter based on this request:
 "{user_prompt}"
 
 Today's date context: {date_str}
+{search_context}
 
 Remember: you are the creative director. Choose the perfect mood, write compelling content, and design a visually stunning layout. Return only valid JSON."""
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10), reraise=True)
-async def generate_newsletter_content(user_prompt: str, date_str: str) -> dict:
+async def generate_newsletter_content(user_prompt: str, date_str: str, search_context: str = "", feedback: str = "") -> dict:
     """
     Generate newsletter content + design metadata from a natural language prompt.
-    Returns structured dict with title, subtitle, mood, sections, closing.
+    Returns structured dict with title, subtitle, mood, sections, sources, closing.
     """
     if not user_prompt or not user_prompt.strip():
         raise ValueError("User prompt cannot be empty")
@@ -104,7 +119,12 @@ async def generate_newsletter_content(user_prompt: str, date_str: str) -> dict:
     user_message = USER_PROMPT_TEMPLATE.format(
         user_prompt=user_prompt.strip(),
         date_str=date_str,
+        search_context=search_context or "",
     )
+
+    if feedback:
+        user_message += f"\n\n## Previous Feedback (please address)\n{feedback}\n"
+    user_message += "\nReturn only valid JSON."
 
     async with httpx.AsyncClient(timeout=60.0) as client:
         response = await client.post(
@@ -139,8 +159,19 @@ def _normalize_content(parsed: dict) -> dict:
         "subtitle": str(parsed.get("subtitle", "")).strip(),
         "mood": str(parsed.get("mood", "minimal")).strip().lower(),
         "sections": [],
+        "sources": [],
         "closing": str(parsed.get("closing", "Until tomorrow.")).strip(),
     }
+
+    # Parse top-level sources
+    raw_sources = parsed.get("sources", [])
+    if isinstance(raw_sources, list):
+        for src in raw_sources:
+            if isinstance(src, dict) and src.get("url"):
+                result["sources"].append({
+                    "title": str(src.get("title", "")).strip() or "Source",
+                    "url": str(src.get("url", "")).strip(),
+                })
 
     # Validate mood
     valid_moods = set(THEMES.keys())
@@ -168,9 +199,10 @@ def _normalize_content(parsed: dict) -> dict:
             "content": str(sec.get("content", "")).strip(),
             "component": str(sec.get("component", "content_card")).strip().lower(),
             "style": str(sec.get("style", "bordered")).strip().lower(),
+            "source_url": str(sec.get("source_url", "")).strip(),
         }
         # Validate component
-        valid_components = {"hero", "content_card", "quote", "bullet_list", "divider", "insight_box", "two_column"}
+        valid_components = {"hero", "content_card", "quote", "bullet_list", "divider", "insight_box", "highlight_stat"}
         if section["component"] not in valid_components:
             section["component"] = "content_card"
         # Validate style
@@ -181,7 +213,7 @@ def _normalize_content(parsed: dict) -> dict:
             "dots", "numbered", "checkmarks", "arrows",  # bullet_list
             "line", "spacing", "decorative",         # divider
             "tip", "warning", "fact",                # insight_box
-            "equal", "left_heavy", "right_heavy",    # two_column
+            "big_number", "percentage", "milestone", # highlight_stat
         }
         if section["style"] not in valid_styles:
             # Map to default for component
@@ -192,7 +224,7 @@ def _normalize_content(parsed: dict) -> dict:
                 "bullet_list": "dots",
                 "divider": "line",
                 "insight_box": "tip",
-                "two_column": "equal",
+                "highlight_stat": "big_number",
             }
             section["style"] = defaults.get(section["component"], "bordered")
 
@@ -209,3 +241,49 @@ def _normalize_content(parsed: dict) -> dict:
         })
 
     return result
+
+
+async def generate_newsletter_with_qa(
+    user_prompt: str,
+    date_str: str,
+    search_context: str = "",
+    max_attempts: int = 2,
+) -> dict:
+    """
+    Generate newsletter with QA review loop.
+    Attempts generation up to max_attempts times with feedback.
+    Returns best-effort content even if QA never fully approves.
+    """
+    feedback = ""
+    best_content = None
+    best_score = 0
+
+    for attempt in range(1, max_attempts + 1):
+        content = await generate_newsletter_content(
+            user_prompt=user_prompt,
+            date_str=date_str,
+            search_context=search_context,
+            feedback=feedback if attempt > 1 else "",
+        )
+
+        # Quick local validation first (fast, no LLM call)
+        quick_issues = quick_validate(content)
+        if quick_issues and attempt < max_attempts:
+            feedback = "Quick validation issues: " + "; ".join(quick_issues)
+            continue
+
+        # Full QA review (LLM call)
+        review = await review_newsletter(content, user_prompt)
+
+        if review["score"] > best_score:
+            best_score = review["score"]
+            best_content = content
+
+        if review["approved"]:
+            return content
+
+        if attempt < max_attempts:
+            feedback = review["feedback"]
+
+    # Return best attempt even if never approved
+    return best_content or content

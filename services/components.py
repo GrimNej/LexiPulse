@@ -14,6 +14,7 @@ def render_component(
     heading: str,
     content: str,
     styles: Dict[str, str],
+    source_url: str = "",
 ) -> str:
     """Route to the correct component renderer."""
     renderers = {
@@ -23,15 +24,15 @@ def render_component(
         "bullet_list": _render_bullet_list,
         "divider": _render_divider,
         "insight_box": _render_insight_box,
-        "two_column": _render_two_column,
+        "highlight_stat": _render_highlight_stat,
     }
     renderer = renderers.get(component_type, _render_content_card)
-    return renderer(style, heading, content, styles)
+    return renderer(style, heading, content, styles, source_url)
 
 
 # ── Hero ──────────────────────────────────────────────────────
 
-def _render_hero(style: str, heading: str, content: str, styles: Dict[str, str]) -> str:
+def _render_hero(style: str, heading: str, content: str, styles: Dict[str, str], source_url: str = "") -> str:
     accent = styles["accent_color"]
     h1_style = styles["h1"]
     muted_style = styles["muted"]
@@ -54,7 +55,7 @@ def _render_hero(style: str, heading: str, content: str, styles: Dict[str, str])
 
 # ── Content Card ──────────────────────────────────────────────
 
-def _render_content_card(style: str, heading: str, content: str, styles: Dict[str, str]) -> str:
+def _render_content_card(style: str, heading: str, content: str, styles: Dict[str, str], source_url: str = "") -> str:
     accent = styles["accent_color"]
     card_bg = styles["card_bg"]
     card_border = styles["card_border"]
@@ -81,7 +82,7 @@ def _render_content_card(style: str, heading: str, content: str, styles: Dict[st
 
 # ── Quote ─────────────────────────────────────────────────────
 
-def _render_quote(style: str, heading: str, content: str, styles: Dict[str, str]) -> str:
+def _render_quote(style: str, heading: str, content: str, styles: Dict[str, str], source_url: str = "") -> str:
     accent = styles["accent_color"]
     text_color = styles["body_text"]
     muted_color = styles["muted"]
@@ -99,12 +100,13 @@ def _render_quote(style: str, heading: str, content: str, styles: Dict[str, str]
         return f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:8px 0;"><tr><td style="padding:{pad} 0;">{heading_html}<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="padding-left:16px;border-left:4px solid {accent};"><p style="font-family:{styles["header_font"]};font-size:16px;font-weight:500;line-height:1.7;color:{text_color};margin:0;">{content_esc}</p></td></tr></table></td></tr></table>'
 
     else:  # minimal_line
-        return f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:8px 0;"><tr><td style="padding:{pad} 0;">{heading_html}<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="padding-left:14px;border-left:2px solid {styles["border_color"]};"><p style="font-family:Georgia,serif;font-size:15px;font-style:italic;line-height:1.7;color:{muted_color};margin:0;">{content_esc}</p></td></tr></table></td></tr></table>'
+        source_html = _source_link_html(source_url, styles)
+        return f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:8px 0;"><tr><td style="padding:{pad} 0;">{heading_html}<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="padding-left:14px;border-left:2px solid {styles["border_color"]};"><p style="font-family:Georgia,serif;font-size:15px;font-style:italic;line-height:1.7;color:{muted_color};margin:0;">{content_esc}</p>{source_html}</td></tr></table></td></tr></table>'
 
 
 # ── Bullet List ───────────────────────────────────────────────
 
-def _render_bullet_list(style: str, heading: str, content: str, styles: Dict[str, str]) -> str:
+def _render_bullet_list(style: str, heading: str, content: str, styles: Dict[str, str], source_url: str = "") -> str:
     pad = styles["section_pad"]
     text_color = styles["body_text"]
     accent_color = styles["accent_color"]
@@ -127,12 +129,13 @@ def _render_bullet_list(style: str, heading: str, content: str, styles: Dict[str
         clean_item = item.lstrip("•-→✓1234567890. ").strip()
         rows += f'<tr><td style="padding:0 10px 10px 0;vertical-align:top;font-size:15px;color:{accent_color};font-weight:600;line-height:1.6;">{pfx}</td><td style="padding:0 0 10px 0;font-family:{body_font};font-size:15px;line-height:1.6;color:{text_color};">{_escape_html(clean_item)}</td></tr>'
 
-    return f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:8px 0;"><tr><td style="padding:{pad} 0;">{heading_html}<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">{rows}</table></td></tr></table>'
+    source_html = _source_link_html(source_url, styles)
+    return f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:8px 0;"><tr><td style="padding:{pad} 0;">{heading_html}<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">{rows}</table>{source_html}</td></tr></table>'
 
 
 # ── Divider ───────────────────────────────────────────────────
 
-def _render_divider(style: str, heading: str, content: str, styles: Dict[str, str]) -> str:
+def _render_divider(style: str, heading: str, content: str, styles: Dict[str, str], source_url: str = "") -> str:
     pad = styles["section_pad"]
     border_color = styles["border_color"]
     accent_color = styles["accent_color"]
@@ -149,7 +152,7 @@ def _render_divider(style: str, heading: str, content: str, styles: Dict[str, st
 
 # ── Insight Box ───────────────────────────────────────────────
 
-def _render_insight_box(style: str, heading: str, content: str, styles: Dict[str, str]) -> str:
+def _render_insight_box(style: str, heading: str, content: str, styles: Dict[str, str], source_url: str = "") -> str:
     label_map = {"tip": "Tip", "warning": "Note", "fact": "Did You Know?"}
     label = label_map.get(style, "Insight")
     bg_color_key = f"insight_{style}"
@@ -161,35 +164,60 @@ def _render_insight_box(style: str, heading: str, content: str, styles: Dict[str
 
     heading_html = f'<p style="{styles["h3"]}">{_escape_html(heading)}</p>' if heading else f'<p style="font-family:{styles["body_font"]};font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:{accent};margin:0 0 8px 0;">{label}</p>'
     content_html = _paragraph_block(content, styles)
+    source_html = _source_link_html(source_url, styles)
 
-    return f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:8px 0;"><tr><td style="padding:{pad};background-color:{bg};border-left:3px solid {accent};border-radius:{radius};">{heading_html}{content_html}</td></tr></table>'
+    return f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:8px 0;"><tr><td style="padding:{pad};background-color:{bg};border-left:3px solid {accent};border-radius:{radius};">{heading_html}{content_html}{source_html}</td></tr></table>'
 
 
-# ── Two Column ────────────────────────────────────────────────
+# ── Highlight Stat ────────────────────────────────────────────
 
-def _render_two_column(style: str, heading: str, content: str, styles: Dict[str, str]) -> str:
-    parts = content.split("---", 1)
-    if len(parts) < 2:
-        return _render_content_card("bordered", heading, content, styles)
-
-    left_text = parts[0].strip()
-    right_text = parts[1].strip()
-
-    if style == "left_heavy":
-        left_w, right_w = "62%", "38%"
-    elif style == "right_heavy":
-        left_w, right_w = "38%", "62%"
-    else:
-        left_w, right_w = "50%", "50%"
-
+def _render_highlight_stat(style: str, heading: str, content: str, styles: Dict[str, str], source_url: str = "") -> str:
+    """Big bold number or fact callout — always works in email clients."""
+    accent = styles["accent_color"]
+    text_color = styles["body_text"]
     card_bg = styles["card_bg"]
     card_border = styles["card_border"]
+    pad = styles["card_pad"]
     radius = styles["border_radius"]
+    header_font = styles["header_font"]
     paragraph = styles["paragraph"]
-    pad = styles["section_pad"]
-    heading_html = f'<p style="{styles["h3"]}">{_escape_html(heading)}</p>' if heading else ""
 
-    return f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:8px 0;"><tr><td style="padding:{pad} 0;">{heading_html}<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td width="{left_w}" valign="top" style="padding-right:12px;"><div style="padding:16px;background-color:{card_bg};border:1px solid {card_border};border-radius:{radius};"><p style="{paragraph};margin:0;">{_escape_html(left_text)}</p></div></td><td width="{right_w}" valign="top" style="padding-left:12px;"><div style="padding:16px;background-color:{card_bg};border:1px solid {card_border};border-radius:{radius};"><p style="{paragraph};margin:0;">{_escape_html(right_text)}</p></div></td></tr></table></td></tr></table>'
+    heading_html = f'<p style="{styles["h3"]}">{_escape_html(heading)}</p>' if heading else ""
+    source_html = _source_link_html(source_url, styles)
+
+    # Extract a bold number/percentage/fact from the first line if possible
+    lines = content.split('\n', 1)
+    stat_line = lines[0].strip() if lines else content.strip()
+    context_lines = lines[1].strip() if len(lines) > 1 else ""
+
+    if style == "big_number":
+        stat_style = f"font-family:{header_font};font-size:42px;font-weight:700;color:{accent};letter-spacing:-0.02em;line-height:1.1;margin:0 0 8px 0;"
+    elif style == "percentage":
+        stat_style = f"font-family:{header_font};font-size:42px;font-weight:700;color:{accent};letter-spacing:-0.02em;line-height:1.1;margin:0 0 8px 0;"
+    else:  # milestone
+        stat_style = f"font-family:{header_font};font-size:24px;font-weight:600;color:{text_color};line-height:1.3;margin:0 0 8px 0;"
+
+    context_html = f'<p style="{paragraph};margin:0;">{_escape_html(context_lines)}</p>' if context_lines else ""
+
+    return f'''<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:8px 0;">
+  <tr>
+    <td style="padding:{pad};background-color:{card_bg};border:1px solid {card_border};border-radius:{radius};text-align:center;">
+      {heading_html}
+      <p style="{stat_style}">{_escape_html(stat_line)}</p>
+      {context_html}
+      {source_html}
+    </td>
+  </tr>
+</table>'''
+
+
+def _source_link_html(source_url: str, styles: Dict[str, str]) -> str:
+    """Render a small source link below content."""
+    if not source_url:
+        return ""
+    muted = styles["muted"]
+    accent = styles["accent_color"]
+    return f'<p style="margin:12px 0 0 0;font-family:system-ui,-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;font-size:12px;text-align:right;"><a href="{_escape_html(source_url)}" style="color:{accent};text-decoration:none;">Source &#8599;</a></p>'
 
 
 # ── Shared Helpers ────────────────────────────────────────────
