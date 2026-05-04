@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from typing import Optional
 
@@ -8,6 +9,8 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from config import settings
 from services.themes import THEMES
 from services.quality_agent import review_newsletter, quick_validate
+
+logger = logging.getLogger(__name__)
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
@@ -154,6 +157,19 @@ async def generate_newsletter_content(user_prompt: str, date_str: str, search_co
     return _normalize_content(parsed)
 
 
+def _is_low_quality_url(url: str) -> bool:
+    """Reject homepage and category-page URLs that don't point to specific articles."""
+    url_lower = url.lower().rstrip("/")
+    # Homepages
+    if url_lower.count("/") <= 2:
+        return True
+    # Common category paths
+    bad_paths = ["/category/", "/topics/", "/tag/", "/tags/", "/search", "/archive/"]
+    if any(bp in url_lower for bp in bad_paths):
+        return True
+    return False
+
+
 def _normalize_content(parsed: dict) -> dict:
     """Ensure the parsed JSON has all required fields with sensible defaults."""
     result = {
@@ -165,15 +181,22 @@ def _normalize_content(parsed: dict) -> dict:
         "closing": str(parsed.get("closing", "Until tomorrow.")).strip(),
     }
 
-    # Parse top-level sources
+    # Parse top-level sources — deduplicate by URL, filter low-quality URLs
     raw_sources = parsed.get("sources", [])
+    seen_urls = set()
     if isinstance(raw_sources, list):
         for src in raw_sources:
             if isinstance(src, dict) and src.get("url"):
-                result["sources"].append({
-                    "title": str(src.get("title", "")).strip() or "Source",
-                    "url": str(src.get("url", "")).strip(),
-                })
+                url = str(src.get("url", "")).strip()
+                # Skip homepage/category URLs
+                if _is_low_quality_url(url):
+                    continue
+                if url.lower() not in seen_urls:
+                    seen_urls.add(url.lower())
+                    result["sources"].append({
+                        "title": str(src.get("title", "")).strip() or "Source",
+                        "url": url,
+                    })
 
     # Validate mood
     valid_moods = set(THEMES.keys())
@@ -260,6 +283,8 @@ async def generate_newsletter_with_qa(
     best_content = None
     best_score = 0
 
+    is_news = any(kw in user_prompt.lower() for kw in {"news", "update", "latest", "today", "breaking"})
+    
     for attempt in range(1, max_attempts + 1):
         content = await generate_newsletter_content(
             user_prompt=user_prompt,
@@ -268,24 +293,32 @@ async def generate_newsletter_with_qa(
             feedback=feedback if attempt > 1 else "",
         )
 
-        # Quick local validation first (fast, no LLM call)
-        quick_issues = quick_validate(content)
-        if quick_issues and attempt < max_attempts:
-            feedback = "Quick validation issues: " + "; ".join(quick_issues)
-            continue
+        # Quick local validation first (fast, no LLM call) — BLOCKING
+        quick_issues = quick_validate(content, is_news=is_news)
+        if quick_issues:
+            logger.info(f"QA attempt {attempt}: quick_validate found {len(quick_issues)} issues: {quick_issues}")
+            if attempt < max_attempts:
+                feedback = "Quick validation issues (MUST fix): " + "; ".join(quick_issues)
+                continue
+            # On last attempt, still log but proceed to full QA
 
         # Full QA review (LLM call)
         review = await review_newsletter(content, user_prompt)
+        logger.info(f"QA attempt {attempt}: score={review['score']}, approved={review['approved']}, issues={review['issues']}")
 
         if review["score"] > best_score:
             best_score = review["score"]
             best_content = content
 
-        if review["approved"]:
+        if review["approved"] and not quick_issues:
+            logger.info(f"QA approved after {attempt} attempt(s)")
             return content
 
         if attempt < max_attempts:
             feedback = review["feedback"]
+            if quick_issues:
+                feedback += "\nAlso: " + "; ".join(quick_issues)
 
+    logger.warning(f"QA never approved after {max_attempts} attempts. Best score: {best_score}")
     # Return best attempt even if never approved
     return best_content or content

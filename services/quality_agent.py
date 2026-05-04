@@ -59,7 +59,7 @@ Respond with valid JSON only:
 }
 ```
 
-Approval threshold: score >= 75 AND no critical issues (missing sources for news, obvious hallucinations).
+Approval threshold: score >= 85 AND no critical issues. Critical issues include: missing sources for news, obvious hallucinations, generic filler text, literal escape sequences.
 """
 
 
@@ -118,13 +118,18 @@ def _normalize_review(review: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def quick_validate(content: Dict[str, Any]) -> List[str]:
+def quick_validate(content: Dict[str, Any], is_news: bool = False) -> List[str]:
     """
     Fast local validation — catches obvious problems without an LLM call.
-    Returns list of issues found.
+    Returns list of issues found. ANY issue triggers a regeneration.
     """
     issues = []
     sections = content.get("sections", [])
+    
+    full_text = " ".join(
+        f"{sec.get('heading', '')} {sec.get('content', '')}" for sec in sections
+    )
+    full_text_lower = full_text.lower()
 
     # Check for empty sections
     empty_count = 0
@@ -139,39 +144,52 @@ def quick_validate(content: Dict[str, Any]) -> List[str]:
         "some experts say", "many believe", "it is said that", "rumored to",
         "widely expected", " reportedly ", " speculated ", " allegedly ",
     ]
-    full_text = " ".join(
-        f"{sec.get('heading', '')} {sec.get('content', '')}" for sec in sections
-    ).lower()
     for phrase in hallucination_phrases:
-        if phrase in full_text:
+        if phrase in full_text_lower:
             issues.append(f"Vague attribution detected: '{phrase.strip()}'")
 
     # Check for literal escape sequences
-    raw_text = " ".join(
-        f"{sec.get('heading', '')} {sec.get('content', '')}" for sec in sections
-    )
-    if "\\n" in raw_text:
-        issues.append("Literal \\n escape sequences found in content — must use actual newlines")
-    if "\\t" in raw_text:
+    if "\\n" in full_text:
+        issues.append("Literal \\n escape sequences found in content")
+    if "\\t" in full_text:
         issues.append("Literal \\t escape sequences found in content")
 
     # Check for generic filler
     filler_phrases = [
-        "stay informed", "follow us for more", "stay ahead of the curve",
+        "stay informed", "follow us for more", "stay ahead of the",
         "stay tuned", "keep updated", "for more insights",
+        "see you tomorrow", "until next time", "thanks for reading",
     ]
     for phrase in filler_phrases:
-        if phrase in full_text:
+        if phrase in full_text_lower:
             issues.append(f"Generic filler text detected: '{phrase}'")
 
-    # Check for source URLs on news content
-    sources = content.get("sources", [])
-    has_source_urls = any(s.get("url") for s in sources)
-    section_urls = any(sec.get("source_url") for sec in sections)
-    if not has_source_urls and not section_urls:
-        # Only flag if prompt seems news-related
-        title = content.get("title", "").lower()
-        if any(k in title for k in {"news", "update", "latest", "this week", "today"}):
-            issues.append("No source URLs found for news content")
+    # Check closing length
+    closing = content.get("closing", "").lower()
+    if len(closing.split()) > 15:
+        issues.append("Closing is too long (>15 words), must be brief and punchy")
+    for phrase in filler_phrases:
+        if phrase in closing:
+            issues.append(f"Closing contains generic filler: '{phrase}'")
+
+    # Check bullet list item count
+    for sec in sections:
+        if sec.get("component") == "bullet_list":
+            items = [l for l in sec.get("content", "").split('\n') if l.strip()]
+            if len(items) < 2:
+                issues.append(f"bullet_list '{sec.get('heading', '')}' has only {len(items)} item(s), needs at least 2")
+
+    # Check for source URLs on news content — EVERY non-hero, non-divider section must have one
+    if is_news:
+        for sec in sections:
+            comp = sec.get("component", "")
+            if comp not in ("hero", "divider") and not sec.get("source_url", "").strip():
+                heading = sec.get("heading", "Untitled")
+                issues.append(f"Section '{heading}' missing source_url — all news sections must cite sources")
+        
+        # Also check top-level sources exist
+        sources = content.get("sources", [])
+        if len(sources) < 2:
+            issues.append(f"News content must have at least 2 distinct sources, found {len(sources)}")
 
     return issues

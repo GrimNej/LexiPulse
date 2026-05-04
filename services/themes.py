@@ -241,6 +241,7 @@ def build_inline_styles(theme: Dict[str, Any], is_dark: bool = False) -> Dict[st
         "h3": f"font-family:{f['header']};font-size:16px;font-weight:600;color:{c('accent')};margin:0 0 10px 0;text-transform:uppercase;letter-spacing:0.08em;",
         "paragraph": f"font-family:{f['body']};font-size:15px;line-height:{s['line_height']};color:{c('text')};margin:0 0 16px 0;",
         "muted": f"font-family:{f['body']};font-size:13px;color:{c('muted')};margin:0;",
+        "muted_color": c("muted"),
         "accent_text": f"color:{c('accent')};",
         "section_pad": s["section_pad"],
         "card_pad": s["card_pad"],

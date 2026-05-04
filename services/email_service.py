@@ -57,12 +57,20 @@ def render_newsletter_email(
             source_url=section.get("source_url", ""),
         )
 
-    # Build sources section
+    # Build sources section — deduplicate by URL
     sources = sources or []
+    seen = set()
+    unique_sources = []
+    for src in sources:
+        url = src.get("url", "")
+        if url and url.lower() not in seen:
+            seen.add(url.lower())
+            unique_sources.append(src)
+    
     sources_html = ""
-    if sources:
+    if unique_sources:
         source_items = ""
-        for src in sources:
+        for src in unique_sources:
             source_title = src.get("title", "Source")
             source_url = src.get("url", "")
             if source_url:
@@ -70,7 +78,7 @@ def render_newsletter_email(
         sources_html = f'''<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
   <tr>
     <td style="padding:24px 0;border-top:1px solid {light_styles['border_color']};">
-      <p style="font-family:{light_styles['header_font']};font-size:12px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:{light_styles['muted']};margin:0 0 12px 0;">Sources</p>
+      <p style="font-family:{light_styles['header_font']};font-size:12px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:{light_styles['muted_color']};margin:0 0 12px 0;">Sources</p>
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
         {source_items}
       </table>
@@ -135,7 +143,7 @@ def render_newsletter_email(
 <body style="margin:0;padding:0;background-color:{light_styles['body_bg']};" class="mofa-dark-bg">
   <!-- Preheader -->
   <div style="display:none;font-size:1px;color:{light_styles['body_bg']};line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
-    {title} — {subtitle}
+    {title} — {subtitle if subtitle else 'Your daily briefing'}
   </div>
 
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:{light_styles['body_bg']};" class="mofa-dark-bg">
@@ -151,7 +159,7 @@ def render_newsletter_email(
                   <td style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:{light_styles['accent_color']};">
                     mofa-letter
                   </td>
-                  <td align="right" style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:12px;color:{light_styles['muted']};">
+                  <td align="right" style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:12px;color:{light_styles['muted_color']};">
                     {send_date}
                   </td>
                 </tr>

@@ -36,21 +36,22 @@ def render_component(
 def _render_hero(style: str, heading: str, content: str, styles: Dict[str, str], source_url: str = "") -> str:
     accent = styles["accent_color"]
     h1_style = styles["h1"]
-    muted_style = styles["muted"]
+    muted_color = styles["muted_color"]
+    body_font = styles["body_font"]
     pad = styles["section_pad"]
     heading_esc = _escape_html(heading)
     content_esc = _escape_html(content) if content else ""
 
     if style == "bold":
-        subtitle_html = f'<p style="{muted_style};font-size:14px;margin-top:8px;">{content_esc}</p>' if content_esc else ""
+        subtitle_html = f'<p style="{body_font};font-size:14px;color:{muted_color};margin-top:8px;">{content_esc}</p>' if content_esc else ""
         return f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="padding:{pad} 0 16px 0;"><h1 style="{h1_style}">{heading_esc}</h1><table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:12px 0 16px 0;"><tr><td style="width:48px;height:3px;background-color:{accent};font-size:0;line-height:0;">&nbsp;</td></tr></table>{subtitle_html}</td></tr></table>'
 
     elif style == "centered":
-        subtitle_html = f'<p style="{muted_style};font-size:14px;margin-top:8px;text-align:center;">{content_esc}</p>' if content_esc else ""
+        subtitle_html = f'<p style="{body_font};font-size:14px;color:{muted_color};margin-top:8px;text-align:center;">{content_esc}</p>' if content_esc else ""
         return f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="padding:{pad} 0 16px 0;text-align:center;"><h1 style="{h1_style};text-align:center;">{heading_esc}</h1>{subtitle_html}</td></tr></table>'
 
     else:  # minimal
-        subtitle_html = f'<p style="{muted_style};font-size:14px;margin-top:8px;">{content_esc}</p>' if content_esc else ""
+        subtitle_html = f'<p style="{body_font};font-size:14px;color:{muted_color};margin-top:8px;">{content_esc}</p>' if content_esc else ""
         return f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="padding:{pad} 0 8px 0;"><h1 style="{h1_style};font-size:26px;">{heading_esc}</h1>{subtitle_html}</td></tr></table>'
 
 
@@ -178,7 +179,7 @@ def _render_insight_box(style: str, heading: str, content: str, styles: Dict[str
 # ── Highlight Stat ────────────────────────────────────────────
 
 def _render_highlight_stat(style: str, heading: str, content: str, styles: Dict[str, str], source_url: str = "") -> str:
-    """Big bold number or fact callout — always works in email clients."""
+    """Big bold number or fact callout — handles single or multiple stats."""
     accent = styles["accent_color"]
     text_color = styles["body_text"]
     card_bg = styles["card_bg"]
@@ -187,30 +188,51 @@ def _render_highlight_stat(style: str, heading: str, content: str, styles: Dict[
     radius = styles["border_radius"]
     header_font = styles["header_font"]
     paragraph = styles["paragraph"]
+    body_font = styles["body_font"]
 
     heading_html = f'<p style="{styles["h3"]}">{_escape_html(heading)}</p>' if heading else ""
     source_html = _source_link_html(source_url, styles)
 
-    # Extract a bold number/percentage/fact from the first line if possible
-    lines = content.split('\n', 1)
-    stat_line = lines[0].strip() if lines else content.strip()
-    context_lines = lines[1].strip() if len(lines) > 1 else ""
+    # Split content into stat blocks (separated by double newlines)
+    # Each block is "stat value\nstat description"
+    stat_blocks = [b.strip() for b in content.split('\n\n') if b.strip()]
+    
+    if not stat_blocks:
+        stat_blocks = [content.strip()]
 
-    if style == "big_number":
-        stat_style = f"font-family:{header_font};font-size:42px;font-weight:700;color:{accent};letter-spacing:-0.02em;line-height:1.1;margin:0 0 8px 0;"
-    elif style == "percentage":
-        stat_style = f"font-family:{header_font};font-size:42px;font-weight:700;color:{accent};letter-spacing:-0.02em;line-height:1.1;margin:0 0 8px 0;"
-    else:  # milestone
-        stat_style = f"font-family:{header_font};font-size:24px;font-weight:600;color:{text_color};line-height:1.3;margin:0 0 8px 0;"
-
-    context_html = f'<p style="{paragraph};margin:0;">{_escape_html(context_lines)}</p>' if context_lines else ""
+    stat_rows = ""
+    for block in stat_blocks:
+        lines = block.split('\n', 1)
+        stat_val = lines[0].strip()
+        stat_desc = lines[1].strip() if len(lines) > 1 else ""
+        
+        if style == "big_number":
+            val_style = f"font-family:{header_font};font-size:36px;font-weight:700;color:{accent};letter-spacing:-0.02em;line-height:1.1;margin:0;"
+        elif style == "percentage":
+            val_style = f"font-family:{header_font};font-size:36px;font-weight:700;color:{accent};letter-spacing:-0.02em;line-height:1.1;margin:0;"
+        else:  # milestone
+            val_style = f"font-family:{header_font};font-size:20px;font-weight:600;color:{text_color};line-height:1.3;margin:0;"
+        
+        desc_html = f'<p style="{body_font};font-size:13px;color:{styles["muted_color"]};margin:4px 0 0 0;">{_escape_html(stat_desc)}</p>' if stat_desc else ""
+        
+        stat_rows += f'''<tr>
+    <td style="padding:16px 0;border-bottom:1px solid {card_border};">
+      <p style="{val_style}">{_escape_html(stat_val)}</p>
+      {desc_html}
+    </td>
+  </tr>'''
+    
+    # Remove border from last row
+    if stat_rows:
+        stat_rows = stat_rows.replace(f'border-bottom:1px solid {card_border};', '', stat_rows.count('border-bottom:1px solid') - 1)
 
     return f'''<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:8px 0;">
   <tr>
     <td style="padding:{pad};background-color:{card_bg};border:1px solid {card_border};border-radius:{radius};text-align:center;">
       {heading_html}
-      <p style="{stat_style}">{_escape_html(stat_line)}</p>
-      {context_html}
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+        {stat_rows}
+      </table>
       {source_html}
     </td>
   </tr>
@@ -223,7 +245,7 @@ def _source_link_html(source_url: str, styles: Dict[str, str]) -> str:
         return ""
     muted = styles["muted"]
     accent = styles["accent_color"]
-    return f'<p style="margin:12px 0 0 0;font-family:system-ui,-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;font-size:12px;text-align:right;"><a href="{_escape_html(source_url)}" style="color:{accent};text-decoration:none;">Source &#8599;</a></p>'
+    return f'<p style="margin:12px 0 0 0;font-family:system-ui,-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;font-size:12px;text-align:right;"><a href="{_escape_html(source_url)}" style="color:{accent};text-decoration:none;">Source &rarr;</a></p>'
 
 
 # ── Shared Helpers ────────────────────────────────────────────
@@ -231,8 +253,8 @@ def _source_link_html(source_url: str, styles: Dict[str, str]) -> str:
 def _paragraph_block(content: str, styles: Dict[str, str]) -> str:
     if not content or not content.strip():
         return ""
-    # Split on double newlines first, then handle single newlines within paragraphs
-    # by converting them to <br> tags for better line break preservation
+    # Split on double newlines for paragraph breaks
+    # Single newlines are treated as part of the same paragraph for email client safety
     blocks = content.split('\n\n')
     html = ""
     paragraph_style = styles["paragraph"]
@@ -240,10 +262,7 @@ def _paragraph_block(content: str, styles: Dict[str, str]) -> str:
         block = block.strip()
         if not block:
             continue
-        # Escape HTML first, then convert single newlines to <br> for line break preservation
-        block_escaped = _escape_html(block)
-        block_escaped = block_escaped.replace('\n', '<br>')
-        html += f'<p style="{paragraph_style}">{block_escaped}</p>'
+        html += f'<p style="{paragraph_style}">{_escape_html(block)}</p>'
     return html
 
 
