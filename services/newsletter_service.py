@@ -73,7 +73,7 @@ async def create_and_send_newsletter(
     if is_time_sensitive_prompt(user_prompt):
         try:
             search_query = build_search_query(user_prompt, date_str)
-            search_results = await search_web(search_query, max_results=5)
+            search_results = await search_web(search_query, max_results=5, use_news=True)
             search_context = format_search_context(search_results)
         except Exception:
             search_context = ""

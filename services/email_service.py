@@ -116,11 +116,11 @@ def render_newsletter_email(
     footer_html = f'''<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
   <tr>
     <td style="padding-top:24px;border-top:1px solid {light_styles['border_color']};">
-      <p style="margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:12px;text-align:center;color:{light_styles['muted']};line-height:1.6;">
+      <p style="margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:12px;text-align:center;color:{light_styles['muted_color']};line-height:1.6;">
         mofa-letter &middot; Sent to you daily
       </p>
-      <p style="margin:8px 0 0 0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:11px;text-align:center;color:{light_styles['muted']};">
-        <a href="{settings.app_base_url.rstrip('/')}/unsubscribe?token={unsubscribe_token}" style="color:{light_styles['muted']};text-decoration:underline;">Unsubscribe</a>
+      <p style="margin:8px 0 0 0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:11px;text-align:center;color:{light_styles['muted_color']};">
+        <a href="{settings.app_base_url.rstrip('/')}/unsubscribe?token={unsubscribe_token}" style="color:{light_styles['muted_color']};text-decoration:underline;">Unsubscribe</a>
       </p>
     </td>
   </tr>

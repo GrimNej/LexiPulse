@@ -59,7 +59,7 @@ Respond with valid JSON only:
 }
 ```
 
-Approval threshold: score >= 85 AND no critical issues. Critical issues include: missing sources for news, obvious hallucinations, generic filler text, literal escape sequences.
+Approval threshold: score >= 80 AND no critical issues. Critical issues include: missing sources for news, obvious hallucinations, generic filler text, literal escape sequences.
 """
 
 

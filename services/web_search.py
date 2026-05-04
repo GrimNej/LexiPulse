@@ -9,20 +9,24 @@ from typing import List, Dict, Any, Optional
 from ddgs import DDGS
 
 
-async def search_web(query: str, max_results: int = 5) -> List[Dict[str, str]]:
+async def search_web(query: str, max_results: int = 5, use_news: bool = False) -> List[Dict[str, str]]:
     """
     Search the web and return results with title, snippet, and URL.
     Runs in thread pool since DDGS is synchronous.
+    use_news=True uses DDG's news-specific search for better article URLs.
     """
     loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(None, _search_sync, query, max_results)
+    return await loop.run_in_executor(None, _search_sync, query, max_results, use_news)
 
 
-def _search_sync(query: str, max_results: int) -> List[Dict[str, str]]:
+def _search_sync(query: str, max_results: int, use_news: bool = False) -> List[Dict[str, str]]:
     """Synchronous DDGS search with credibility filtering."""
     try:
         with DDGS() as ddgs:
-            raw_results = list(ddgs.text(query, max_results=max_results * 3))
+            if use_news:
+                raw_results = list(ddgs.news(query, max_results=max_results * 3))
+            else:
+                raw_results = list(ddgs.text(query, max_results=max_results * 3))
             # Filter and rank by credibility
             credible = [r for r in raw_results if _is_credible_result({
                 "title": r.get("title", ""),
