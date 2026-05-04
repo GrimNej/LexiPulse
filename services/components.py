@@ -5,6 +5,7 @@ Each component returns a string of table-based HTML with inline styles.
 All styles come from the theme dict to ensure mood-aware rendering.
 """
 
+import re
 from typing import Dict, Any
 
 
@@ -129,7 +130,9 @@ def _render_bullet_list(style: str, heading: str, content: str, styles: Dict[str
     rows = ""
     for i, item in enumerate(items):
         pfx = prefix(i)
-        clean_item = item.lstrip("•-→✓1234567890. ").strip()
+        # Strip common bullet prefixes but preserve numbers that are part of content
+        clean_item = re.sub(r'^[\s•\-\→✓]+\s*', '', item).strip()
+        clean_item = re.sub(r'^\d+\.\s+', '', clean_item)
         rows += f'<tr><td style="padding:0 10px 10px 0;vertical-align:top;font-size:15px;color:{accent_color};font-weight:600;line-height:1.6;">{pfx}</td><td style="padding:0 0 10px 0;font-family:{body_font};font-size:15px;line-height:1.6;color:{text_color};">{_escape_html(clean_item)}</td></tr>'
 
     source_html = _source_link_html(source_url, styles)
@@ -228,13 +231,19 @@ def _source_link_html(source_url: str, styles: Dict[str, str]) -> str:
 def _paragraph_block(content: str, styles: Dict[str, str]) -> str:
     if not content or not content.strip():
         return ""
-    paragraphs = content.split('\n\n')
+    # Split on double newlines first, then handle single newlines within paragraphs
+    # by converting them to <br> tags for better line break preservation
+    blocks = content.split('\n\n')
     html = ""
     paragraph_style = styles["paragraph"]
-    for para in paragraphs:
-        para = para.strip()
-        if para:
-            html += f'<p style="{paragraph_style}">{_escape_html(para)}</p>'
+    for block in blocks:
+        block = block.strip()
+        if not block:
+            continue
+        # Escape HTML first, then convert single newlines to <br> for line break preservation
+        block_escaped = _escape_html(block)
+        block_escaped = block_escaped.replace('\n', '<br>')
+        html += f'<p style="{paragraph_style}">{block_escaped}</p>'
     return html
 
 

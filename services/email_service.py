@@ -39,8 +39,15 @@ def render_newsletter_email(
     dark_styles = build_inline_styles(theme, is_dark=True)
 
     # Render all content sections
+    # If first section is a hero with no heading, inject the newsletter title
+    processed_sections = list(sections)
+    if processed_sections and processed_sections[0].get("component") == "hero":
+        if not processed_sections[0].get("heading", "").strip():
+            processed_sections[0] = dict(processed_sections[0])
+            processed_sections[0]["heading"] = title
+    
     body_sections_html = ""
-    for section in sections:
+    for section in processed_sections:
         body_sections_html += render_component(
             component_type=section.get("component", "content_card"),
             style=section.get("style", "bordered"),
