@@ -76,8 +76,9 @@ def _render_content_card(style: str, heading: str, content: str, styles: Dict[st
 
     heading_html = f'<p style="{h3_style}">{_escape_html(heading)}</p>' if heading else ""
     content_html = _paragraph_block(content, styles)
+    source_html = _source_link_html(source_url, styles)
 
-    return f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 4px 0;"><tr><td style="padding:{pad};{border_attr}{bg_attr}border-radius:{radius};">{heading_html}{content_html}</td></tr></table>'
+    return f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 4px 0;"><tr><td style="padding:{pad};{border_attr}{bg_attr}border-radius:{radius};">{heading_html}{content_html}{source_html}</td></tr></table>'
 
 
 # ── Quote ─────────────────────────────────────────────────────
@@ -94,10 +95,12 @@ def _render_quote(style: str, heading: str, content: str, styles: Dict[str, str]
     content_esc = _escape_html(content)
 
     if style == "elegant":
-        return f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:8px 0;"><tr><td style="padding:{pad} 0;">{heading_html}<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="padding:20px 24px;background-color:{card_bg};border-radius:{radius};border:1px solid {card_border};"><p style="font-family:Georgia,serif;font-size:18px;font-style:italic;line-height:1.8;color:{text_color};margin:0;">&ldquo;{content_esc}&rdquo;</p></td></tr></table></td></tr></table>'
+        source_html = _source_link_html(source_url, styles)
+        return f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:8px 0;"><tr><td style="padding:{pad} 0;">{heading_html}<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="padding:20px 24px;background-color:{card_bg};border-radius:{radius};border:1px solid {card_border};"><p style="font-family:Georgia,serif;font-size:18px;font-style:italic;line-height:1.8;color:{text_color};margin:0;">&ldquo;{content_esc}&rdquo;</p>{source_html}</td></tr></table></td></tr></table>'
 
     elif style == "modern":
-        return f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:8px 0;"><tr><td style="padding:{pad} 0;">{heading_html}<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="padding-left:16px;border-left:4px solid {accent};"><p style="font-family:{styles["header_font"]};font-size:16px;font-weight:500;line-height:1.7;color:{text_color};margin:0;">{content_esc}</p></td></tr></table></td></tr></table>'
+        source_html = _source_link_html(source_url, styles)
+        return f'<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:8px 0;"><tr><td style="padding:{pad} 0;">{heading_html}<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="padding-left:16px;border-left:4px solid {accent};"><p style="font-family:{styles["header_font"]};font-size:16px;font-weight:500;line-height:1.7;color:{text_color};margin:0;">{content_esc}</p>{source_html}</td></tr></table></td></tr></table>'
 
     else:  # minimal_line
         source_html = _source_link_html(source_url, styles)
