@@ -1,3 +1,4 @@
+import logging
 from datetime import date, datetime, timezone
 from typing import Optional
 from uuid import UUID
@@ -12,6 +13,8 @@ from services.token_service import create_feedback_token, generate_unsubscribe_t
 from services.content_agent import generate_newsletter_with_qa
 from services.web_search import search_web, format_search_context, is_time_sensitive_prompt, build_search_query
 
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_PROMPT = "A concise, engaging daily newsletter with interesting insights, key developments, and actionable takeaways tailored to today's world."
 
@@ -82,6 +85,9 @@ async def create_and_send_newsletter(
     try:
         content = await generate_newsletter_with_qa(user_prompt, date_str, search_context=search_context)
     except Exception as exc:
+        import traceback
+        logger.error(f"Newsletter generation failed for user {user.id}: {exc}")
+        traceback.print_exc()
         # Fallback apology newsletter
         content = {
             "title": "Your Daily Brief",
