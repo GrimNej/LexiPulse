@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import settings
 from database import engine, get_db
-from routers import scheduler, feedback, admin, subscribe, unsubscribe
+from routers import scheduler, feedback, admin, subscribe, unsubscribe, change_topic
 
 # Configure structured logging
 logging.basicConfig(
@@ -56,6 +56,7 @@ app.include_router(feedback.router)
 app.include_router(admin.router)
 app.include_router(subscribe.router)
 app.include_router(unsubscribe.router)
+app.include_router(change_topic.router)
 
 
 LANDING_PAGE_HTML = """
