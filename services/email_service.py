@@ -95,19 +95,37 @@ def render_newsletter_email(
   </tr>
 </table>'''
 
-    # Build send-more CTA
+    # Build change-topic + send-more CTA section
+    change_topic_url = f"{settings.app_base_url.rstrip('/')}/change-topic?token={unsubscribe_token}"
+    want_more_url = f"{settings.app_base_url.rstrip('/')}/feedback?t={token}&a=want_more"
+
     cta_html = f'''<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
   <tr>
     <td style="padding:24px 0;border-top:1px solid {light_styles['border_color']};">
-      <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;">
+      <!-- Change Topic button -->
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 12px auto;">
         <tr>
           <td align="center">
-            <a href="{settings.app_base_url.rstrip('/')}/feedback?t={token}&a=want_more" style="display:inline-block;padding:10px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;font-weight:500;color:{light_styles['accent_color']};background-color:transparent;border:1px solid {light_styles['accent_color']};border-radius:9999px;text-decoration:none;">
+            <a href="{change_topic_url}" style="display:inline-block;padding:10px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;font-weight:500;color:{light_styles['muted_color']};background-color:transparent;border:1px solid {light_styles['border_color']};border-radius:9999px;text-decoration:none;">
+              Change Topic
+            </a>
+          </td>
+        </tr>
+      </table>
+      <!-- Send Me More button -->
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 8px auto;">
+        <tr>
+          <td align="center">
+            <a href="{want_more_url}" style="display:inline-block;padding:10px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;font-weight:500;color:{light_styles['accent_color']};background-color:transparent;border:1px solid {light_styles['accent_color']};border-radius:9999px;text-decoration:none;">
               Send Me More
             </a>
           </td>
         </tr>
       </table>
+      <!-- Limit note -->
+      <p style="margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:12px;text-align:center;color:{light_styles['muted_color']};">
+        You can receive up to 3 extra emails per day
+      </p>
     </td>
   </tr>
 </table>'''
