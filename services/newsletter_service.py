@@ -57,7 +57,7 @@ async def create_and_send_newsletter(
     # Daily cap check
     if source in ("scheduled", "on_demand"):
         today_count = await count_newsletters_today(db, user.id)
-        if today_count >= 5:
+        if today_count >= 3:
             return None
         sequence_num = today_count + 1
     else:

@@ -77,7 +77,7 @@ async def handle_feedback(
         )
         today_count = count_result.scalar_one()
 
-        if today_count >= 5:
+        if today_count >= 3:
             logger.info(f"User {user.id} daily cap reached ({today_count}), ignoring want_more")
             return Response(content=AUTO_CLOSE_HTML, media_type="text/html")
 

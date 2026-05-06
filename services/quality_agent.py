@@ -86,7 +86,7 @@ async def review_newsletter(content: Dict[str, Any], original_prompt: str) -> Di
                     {"role": "user", "content": json.dumps(review_input, ensure_ascii=False)},
                 ],
                 "temperature": 0.3,
-                "max_tokens": 1500,
+                "max_tokens": 2000,
                 "response_format": {"type": "json_object"},
             },
         )

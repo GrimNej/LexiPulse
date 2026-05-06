@@ -148,7 +148,7 @@ async def generate_newsletter_content(user_prompt: str, date_str: str, search_co
                     {"role": "user", "content": user_message},
                 ],
                 "temperature": 0.75,
-                "max_tokens": 3000,
+                "max_tokens": 5000,
                 "response_format": {"type": "json_object"},
             },
         )
