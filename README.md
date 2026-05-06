@@ -1,15 +1,14 @@
-# LexiPulse
+# mofa-letter
 
-Adaptive Daily Vocabulary Newsletter — completely free, forever.
+Adaptive Daily Newsletter — completely free, forever.
 
 ## What It Does
 
-Every morning at 7:00 AM NPT, LexiPulse sends each registered user an email containing three advanced English words, complete with definitions, etymology, pronunciation, and example sentences. Users interact entirely through tracked links in the email — no app, no login, no dashboard.
+Every morning, mofa-letter sends each registered user a personalized newsletter on any topic they choose — finance, tech, philosophy, cooking, AI news, anything. Users interact entirely through tracked links in the email — no app, no login, no dashboard.
 
-- **Too Easy** raises their difficulty level
-- **Too Hard** lowers it
-- **Just Right** confirms the current level
-- **Send Me More** delivers up to four bonus newsletters per day
+- **Send Me More** delivers bonus newsletters on demand (up to 5 per day)
+- **Unsubscribe** anytime with one click
+- **Any topic** — enter a custom prompt and the AI creative director designs the perfect newsletter
 
 ## Tech Stack
 
@@ -25,7 +24,7 @@ Every morning at 7:00 AM NPT, LexiPulse sends each registered user an email cont
 
 ## Quick Start
 
-See `Plan.md` for the full setup and deployment guide.
+See `DEPLOYMENT.md` for the full setup and deployment guide.
 
 ## Admin Endpoints
 

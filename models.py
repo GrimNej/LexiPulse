@@ -32,12 +32,11 @@ class User(Base):
     newsletter_prompt = Column(Text, nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
     timezone = Column(String(50), nullable=False, default="Asia/Kathmandu")
-    topic = Column(String(100), nullable=False, default="vocabulary")
+    topic = Column(String(100), nullable=False, default="general")
     unsubscribe_token = Column(String(64), unique=True, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
     newsletters = relationship("Newsletter", back_populates="user", cascade="all, delete-orphan")
-    sent_words = relationship("SentWord", back_populates="user", cascade="all, delete-orphan")
     feedback_tokens = relationship("FeedbackToken", back_populates="user", cascade="all, delete-orphan")
 
     __table_args__ = (
@@ -53,7 +52,6 @@ class Newsletter(Base):
     send_date = Column(Date, nullable=False)
     sequence_num = Column(Integer, nullable=False, default=1)
     level_at_send = Column(Integer, nullable=False)
-    words = Column(JSONB, nullable=True)
     prompt_used = Column(Text, nullable=True)
     content_structure = Column(JSONB, nullable=True)
     design_metadata = Column(JSONB, nullable=True)
@@ -61,32 +59,11 @@ class Newsletter(Base):
     sent_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
     user = relationship("User", back_populates="newsletters")
-    sent_words = relationship("SentWord", back_populates="newsletter", cascade="all, delete-orphan")
     feedback_tokens = relationship("FeedbackToken", back_populates="newsletter", cascade="all, delete-orphan")
 
     __table_args__ = (
         UniqueConstraint("user_id", "send_date", "sequence_num", name="uq_newsletter_user_date_seq"),
         Index("ix_newsletters_user_send_date", "user_id", "send_date"),
-    )
-
-
-class SentWord(Base):
-    __tablename__ = "sent_words"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    word = Column(String(100), nullable=False)
-    newsletter_id = Column(UUID(as_uuid=True), ForeignKey("newsletters.id", ondelete="CASCADE"), nullable=False)
-    level_at_send = Column(Integer, nullable=False)
-    sent_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
-
-    user = relationship("User", back_populates="sent_words")
-    newsletter = relationship("Newsletter", back_populates="sent_words")
-
-    __table_args__ = (
-        UniqueConstraint("user_id", "word", name="uq_sent_words_user_word"),
-        Index("ix_sent_words_user_word_lower", text("lower(word)"), "user_id"),
-        Index("ix_sent_words_user_sent_at", "user_id", "sent_at"),
     )
 
 

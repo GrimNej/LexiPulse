@@ -13,7 +13,7 @@ class UserBase(BaseModel):
     level: Optional[int] = Field(default=5, ge=1, le=10)
     is_active: bool = True
     timezone: str = "Asia/Kathmandu"
-    topic: str = "vocabulary"
+    topic: str = "general"
     newsletter_prompt: Optional[str] = None
 
 
@@ -40,7 +40,6 @@ class UserRead(UserBase):
 
 class UserStats(UserRead):
     total_newsletters: int
-    total_words: int
     current_level: int
     topic: str
     newsletter_prompt: Optional[str] = None
@@ -54,15 +53,6 @@ class NewsletterSection(BaseModel):
     style: str = "paragraph"  # paragraph | bullet | quote
 
 
-class WordData(BaseModel):
-    word: str
-    pronunciation: str
-    part_of_speech: str
-    etymology: str
-    definitions: List[str]
-    examples: List[str]
-
-
 class NewsletterRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -71,7 +61,6 @@ class NewsletterRead(BaseModel):
     send_date: datetime
     sequence_num: int
     level_at_send: int
-    words: List[WordData]
     source: str
     sent_at: datetime
 
@@ -79,7 +68,7 @@ class NewsletterRead(BaseModel):
 # ── Feedback Schemas ──────────────────────────────────────────
 
 class FeedbackAction(BaseModel):
-    action: str  # too_easy | just_right | too_hard | want_more
+    action: str  # want_more
 
 
 # ── Admin Schemas ─────────────────────────────────────────────
@@ -87,7 +76,7 @@ class FeedbackAction(BaseModel):
 class SubscribeRequest(BaseModel):
     name: str = Field(..., max_length=100)
     email: EmailStr
-    topic: str = Field(default="vocabulary", max_length=100)
+    topic: str = Field(default="general", max_length=100)
     timezone: str = "Asia/Kathmandu"
     newsletter_prompt: Optional[str] = None
 

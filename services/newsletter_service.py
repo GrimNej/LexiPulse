@@ -13,7 +13,7 @@ from services.content_agent import generate_newsletter_with_qa
 from services.web_search import search_web, format_search_context, is_time_sensitive_prompt, build_search_query
 
 
-DEFAULT_PROMPT = "Three advanced English vocabulary words with pronunciation, etymology, definitions, and example sentences. The words should be genuinely rare and rewarding to learn."
+DEFAULT_PROMPT = "A concise, engaging daily newsletter with interesting insights, key developments, and actionable takeaways tailored to today's world."
 
 
 async def count_newsletters_today(db: AsyncSession, user_id: UUID) -> int:
@@ -104,7 +104,6 @@ async def create_and_send_newsletter(
         send_date=today,
         sequence_num=sequence_num,
         level_at_send=user.level or 5,
-        words=None,
         prompt_used=user_prompt,
         content_structure=content,
         design_metadata={"mood": content.get("mood", "minimal")},

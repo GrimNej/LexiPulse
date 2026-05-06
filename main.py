@@ -105,10 +105,10 @@ LANDING_PAGE_HTML = """
     <header>
       <p class="brand">AI-Powered Newsletter System</p>
       <h1>mofa-letter.</h1>
-      <p class="tagline">Your topic. Your words. Delivered daily.</p>
+      <p class="tagline">Your topic. Your newsletter. Delivered daily.</p>
       <p class="desc">
-        Enter any topic — vocabulary, finance, philosophy, cooking, anything.
-        Our NLP engine crafts a personalized newsletter just for you.
+        Enter any topic — finance, philosophy, cooking, tech, anything.
+        Our AI engine crafts a personalized newsletter just for you.
       </p>
       <a href="#" class="cta">Coming Soon — Join the Waitlist</a>
     </header>
@@ -117,7 +117,7 @@ LANDING_PAGE_HTML = """
       <div class="feature">
         <div class="feature-num">01</div>
         <h3>Choose Any Topic</h3>
-        <p>Literally anything. From advanced vocabulary to astrophysics. You decide what you want to learn.</p>
+        <p>Literally anything. From finance to astrophysics. You decide what you want to learn.</p>
       </div>
       <div class="feature">
         <div class="feature-num">02</div>

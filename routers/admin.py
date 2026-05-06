@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import settings
 from database import get_db
-from models import User, Newsletter, SentWord
+from models import User, Newsletter
 from schemas import UserCreate, UserUpdate, UserRead, UserStats
 from services.newsletter_service import create_and_send_newsletter
 from services.token_service import generate_unsubscribe_token
@@ -74,17 +74,6 @@ async def list_users(
         for uid, cnt in nl_result.all():
             nl_counts[uid] = cnt
 
-    # Word counts
-    word_counts = {}
-    if user_ids:
-        word_result = await db.execute(
-            select(SentWord.user_id, func.count(SentWord.id))
-            .where(SentWord.user_id.in_(user_ids))
-            .group_by(SentWord.user_id)
-        )
-        for uid, cnt in word_result.all():
-            word_counts[uid] = cnt
-
     response = []
     for user in users:
         response.append(
@@ -99,7 +88,6 @@ async def list_users(
                 newsletter_prompt=user.newsletter_prompt,
                 created_at=user.created_at,
                 total_newsletters=nl_counts.get(user.id, 0),
-                total_words=word_counts.get(user.id, 0),
                 current_level=user.level,
             )
         )
@@ -121,9 +109,6 @@ async def get_user(
     nl_result = await db.execute(
         select(func.count(Newsletter.id)).where(Newsletter.user_id == user_id)
     )
-    word_result = await db.execute(
-        select(func.count(SentWord.id)).where(SentWord.user_id == user_id)
-    )
 
     return UserStats(
         id=user.id,
@@ -135,7 +120,6 @@ async def get_user(
         topic=user.topic,
         created_at=user.created_at,
         total_newsletters=nl_result.scalar_one(),
-        total_words=word_result.scalar_one(),
         current_level=user.level,
     )
 
