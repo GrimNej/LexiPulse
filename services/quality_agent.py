@@ -82,7 +82,7 @@ async def review_newsletter(content: Dict[str, Any], original_prompt: str) -> Di
                 "Content-Type": "application/json",
             },
             json={
-                "model": settings.groq_model,
+                "model": settings.groq_qa_model,
                 "messages": [
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": json.dumps(review_input, ensure_ascii=False)},

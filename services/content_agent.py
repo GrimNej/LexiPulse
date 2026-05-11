@@ -307,8 +307,8 @@ async def generate_newsletter_with_qa(
                 continue
             # On last attempt, still log but proceed to full QA
 
-        # Small delay before QA review to space out Groq API calls
-        await asyncio.sleep(1)
+        # Delay before QA review to stay under Groq rate limits (70B generate -> 8B review)
+        await asyncio.sleep(5)
         # Full QA review (LLM call)
         review = await review_newsletter(content, user_prompt)
         logger.info(f"QA attempt {attempt}: score={review['score']}, approved={review['approved']}, issues={review['issues']}")
