@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, Request, Depends, HTTPException
 from sqlalchemy import select
@@ -14,18 +15,32 @@ from services.newsletter_service import create_and_send_newsletter
 router = APIRouter(prefix="/scheduler", tags=["scheduler"])
 logger = logging.getLogger(__name__)
 
+# In-memory lock to prevent duplicate scheduled runs within a 23-hour window
+_LAST_SCHEDULER_RUN: datetime | None = None
+_MIN_SCHEDULER_INTERVAL_HOURS = 23
+
 
 @router.post("/run", response_model=SchedulerResult)
 async def run_scheduler(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
+    global _LAST_SCHEDULER_RUN
+
     # 1. Authenticate
     key = request.headers.get("X-Scheduler-Key")
     if key != settings.scheduler_api_key:
         raise HTTPException(status_code=403, detail="Forbidden")
 
-    # 2. Fetch all active users
+    # 2. Idempotency lock — reject duplicate runs within 23 hours
+    if _LAST_SCHEDULER_RUN is not None:
+        elapsed = datetime.now(timezone.utc) - _LAST_SCHEDULER_RUN
+        if elapsed < timedelta(hours=_MIN_SCHEDULER_INTERVAL_HOURS):
+            logger.info(f"Scheduler rejected: last run was {elapsed.total_seconds()/3600:.1f} hours ago")
+            return {"sent": 0, "failed": 0, "total": 0}
+    _LAST_SCHEDULER_RUN = datetime.now(timezone.utc)
+
+    # 3. Fetch all active users
     result = await db.execute(select(User).where(User.is_active == True))
     users = result.scalars().all()
 

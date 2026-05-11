@@ -64,7 +64,7 @@ Approval threshold: score >= 80 AND no critical issues. Critical issues include:
 """
 
 
-@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10), reraise=True)
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=15), reraise=True)
 async def review_newsletter(content: Dict[str, Any], original_prompt: str) -> Dict[str, Any]:
     """
     Review newsletter content. Returns dict with approved, score, issues, feedback.

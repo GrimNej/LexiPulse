@@ -1,9 +1,7 @@
 name: Daily Newsletter Send
 
 on:
-  schedule:
-    - cron: '15 1 * * *'   # 01:15 UTC = 07:00 AM NPT (UTC+05:45)
-  workflow_dispatch:         # Allows manual trigger from the GitHub Actions UI
+  workflow_dispatch:         # Manual trigger only — VM cron handles the daily schedule
 
 jobs:
   trigger-daily-send:

@@ -115,7 +115,7 @@ Today's date context: {date_str}
 Remember: you are the creative director. Choose the perfect mood, write compelling content, and design a visually stunning layout. Return only valid JSON."""
 
 
-@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10), reraise=True)
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=30), reraise=True)
 async def generate_newsletter_content(user_prompt: str, date_str: str, search_context: str = "", feedback: str = "") -> dict:
     """
     Generate newsletter content + design metadata from a natural language prompt.
