@@ -29,26 +29,22 @@ async def run_scheduler(
     result = await db.execute(select(User).where(User.is_active == True))
     users = result.scalars().all()
 
-    # 3. Process all users concurrently
-    async def send_for_user(user: User) -> bool:
+    # 3. Process users sequentially with delay to avoid rate limits
+    sent = 0
+    failed = 0
+    for user in users:
         try:
             newsletter = await create_and_send_newsletter(db, user, source="scheduled")
             if newsletter:
                 logger.info(f"Scheduled newsletter sent to user {user.id} ({user.email})")
+                sent += 1
             else:
                 logger.info(f"Skipped scheduled newsletter for user {user.id} (already sent today)")
-            return True
         except Exception as exc:
             logger.exception(f"Failed to send scheduled newsletter to user {user.id}: {exc}")
-            return False
-
-    results = await asyncio.gather(
-        *[send_for_user(user) for user in users],
-        return_exceptions=True,
-    )
-
-    sent = sum(1 for r in results if r is True)
-    failed = sum(1 for r in results if isinstance(r, Exception) or r is False)
+            failed += 1
+        # Small delay between users to stay well under Groq rate limits
+        await asyncio.sleep(3)
 
     await db.commit()
 

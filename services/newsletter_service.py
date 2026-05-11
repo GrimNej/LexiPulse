@@ -143,6 +143,10 @@ async def create_and_send_newsletter(
         unsubscribe_token=user.unsubscribe_token,
         sources=content.get("sources", []),
     )
-    await send_email(user.email, subject, html_body)
+    try:
+        await send_email(user.email, subject, html_body)
+    except Exception as exc:
+        logger.error(f"Email send failed for user {user.id} ({user.email}): {exc}")
+        # Newsletter was generated and saved; email failure is logged but not fatal
 
     return newsletter
