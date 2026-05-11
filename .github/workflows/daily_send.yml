@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Trigger daily send endpoint
         run: |
-          curl -X POST "https://lexipulse.mofa.ai/scheduler/run" \
+          curl -X POST "http://157.151.215.192/scheduler/run" \
             -H "X-Scheduler-Key: ${{ secrets.SCHEDULER_API_KEY }}" \
             -H "Content-Type: application/json" \
             --max-time 120 \
