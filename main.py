@@ -37,12 +37,14 @@ app = FastAPI(
 
 
 # HTTPS enforcement middleware for sensitive endpoints in production
+# Localhost/127.0.0.1 is exempt so the VM cron job can hit the scheduler directly
 @app.middleware("http")
 async def https_enforcement(request: Request, call_next):
     if settings.env == "production":
+        host = request.headers.get("host", "").split(":")[0]
         path = request.url.path
         if path.startswith("/admin") or path.startswith("/scheduler"):
-            if request.url.scheme != "https":
+            if request.url.scheme != "https" and host not in ("localhost", "127.0.0.1"):
                 return JSONResponse(
                     status_code=400,
                     content={"detail": "HTTPS required"},
